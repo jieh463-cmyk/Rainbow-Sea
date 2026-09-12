@@ -155,7 +155,7 @@ void servo_ppd_init()
 //	servo_pid.Kp2 = flash_buff[8];           //7     
 //	servo_pid.Kd1 = flash_buff[5];			//50					//flash_buff[5] 5
 //	servo_pid.Kd2 = flash_buff[6];            //40   //flash_buff[6]  20
-	servo_pid.Kp1 = 45;  // 原27，降低以减少直道晃动  41        //  35  速度120  //24
+	servo_pid.Kp1 = 30;  // 原27，降低以减少直道晃动  41        //  35  速度120  //24
 	servo_pid.Kp2 = 3;           //   0
 	servo_pid.Kd1 = 12;			//50					//flash_buff[5] 5
 	servo_pid.Kd2 = -165;            //40   //flash_buff[6]  20        52 3 6 -190       40 3 6 -185

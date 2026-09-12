@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               12/09/26  19:11:25  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               12/09/26  20:59:25  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -66,297 +66,298 @@ stmt  level    source
    53           char buf[32];
    54                  int len;
    55               int s=0;
-C251 COMPILER V5.60.0,  main                                                               12/09/26  19:11:25  PAGE 2   
+C251 COMPILER V5.60.0,  main                                                               12/09/26  20:59:25  PAGE 2   
 
    56          
-   57          #if 0  // ↓↓↓ 激光相关代码已禁用（全程周期性激光发射方案）
-               // ============================================================
-               // ★ 全程周期性激光发射方案（注释待启用）
-               // 思路：不依赖靶子识别，激光全程按固定间隔自动脉冲
-               //      车正常巡线跑过靶子，脉冲命中哪个是哪个
-               // PIT 基准: 10ms/拍 (TIM0_PIT @ 100Hz)
-               // 间隔 100ms(10拍), 脉宽 20ms(2拍), 占空比 ~17%
-               // 车速 ~2m/s 时，靶子区域 40cm 通过时间 ~200ms
-               // → 每个靶子经过时至少命中 1~2 次
-               // ============================================================
-                #define LASER_PERIODIC_INTERVAL  10   // 发射间隔: 10拍 = 100ms
-                #define LASER_PERIODIC_DURATION   2   // 脉冲宽度:  2拍 =  20ms
-               
-                static uint8 laser_periodic_timer = 0;    // 脉冲定时器 (10ms/拍)
-                static uint8 laser_periodic_on    = 0;    // 1=激光正在发射中
-               
-                void laser_periodic_handler(void)
-                {
-                    if (laser_periodic_timer > 0)
-                    {
-                        laser_periodic_timer--;
-                    }
-               
-                    if (laser_periodic_timer == 0)
-                    {
-                        if (laser_periodic_on)
-                        {
-                            // --- 脉冲结束，关闭激光 ---
-                            gpio_set_level(IO_P67, 0);
-                            gpio_set_level(IO_P76, 0);
-                            gpio_set_level(IO_P74, 0);
-                            gpio_set_level(IO_P77, 0);
-                            gpio_set_level(IO_P75, 0);
-                            laser_periodic_on    = 0;
-                            laser_periodic_timer = LASER_PERIODIC_INTERVAL;   // 下一轮间隔
-                        }
-                        else
-                        {
-                            // --- 开始新脉冲，打开激光 ---
-                            gpio_set_level(IO_P67, 1);
-                            gpio_set_level(IO_P76, 1);
-                            //gpio_set_level(IO_P74, 1);
-                            gpio_set_level(IO_P77, 1);
-                           // gpio_set_level(IO_P75, 1);
-                            laser_periodic_on    = 1;
-                            laser_periodic_timer = LASER_PERIODIC_DURATION;   // 脉冲保持
-                        }
-                    }
-                }
-               // ============================================================
-               #endif  // ↑↑↑ 激光相关代码已禁用
-  108          
-  109          void buzzer_pit_handler(void)
-  110          {
-  111   1          if(buzzer_flag && buzzer_count)
-  112   1          {
-  113   2              buzzer_count--;
-  114   2              if(buzzer_count == 0)
-  115   2              {
-  116   3                  buzzer_flag = 0;
-  117   3                  gpio_set_level(IO_P65, 0);
-  118   3              }
-  119   2          }
-  120   1        if(shot_CD != 0){
-  121   2          shot_CD-- ;
-C251 COMPILER V5.60.0,  main                                                               12/09/26  19:11:25  PAGE 3   
+   57          // ============================================================
+   58          // ★ 全程周期性激光发射方案（注释待启用）
+   59          // 思路：不依赖靶子识别，激光全程按固定间隔自动脉冲
+   60          //      车正常巡线跑过靶子，脉冲命中哪个是哪个
+   61          // PIT 基准: 10ms/拍 (TIM0_PIT @ 100Hz)
+   62          // 间隔 100ms(10拍), 脉宽 20ms(2拍), 占空比 ~17%
+   63          // 车速 ~2m/s 时，靶子区域 40cm 通过时间 ~200ms
+   64          // → 每个靶子经过时至少命中 1~2 次
+   65          // ============================================================
+   66           //#define LASER_PERIODIC_INTERVAL  10   // 发射间隔: 10拍 = 100ms
+   67           //#define LASER_PERIODIC_DURATION   2   // 脉冲宽度:  2拍 =  20ms
+   68          
+   69           //static uint8 laser_periodic_timer = 0;    // 脉冲定时器 (10ms/拍)
+   70           //static uint8 laser_periodic_on    = 0;    // 1=激光正在发射中
+   71          
+   72           //void laser_periodic_handler(void)
+   73           //{
+   74               //if (laser_periodic_timer > 0)
+   75               //{
+   76                   //laser_periodic_timer--;
+   77               //}
+   78          
+   79               //if (laser_periodic_timer == 0)
+   80               //{
+   81                   //if (laser_periodic_on)
+   82                   //{
+   83                       // --- 脉冲结束，关闭激光 ---
+   84                       //gpio_set_level(IO_P67, 0);
+   85                       //gpio_set_level(IO_P76, 0);
+   86                       //gpio_set_level(IO_P74, 0);
+   87                       //gpio_set_level(IO_P77, 0);
+   88                       //gpio_set_level(IO_P75, 0);
+   89                       //laser_periodic_on    = 0;
+   90                       //laser_periodic_timer = LASER_PERIODIC_INTERVAL;   // 下一轮间隔
+   91                   //}
+   92                   //else
+   93                   //{
+   94                       // --- 开始新脉冲，打开激光 ---
+   95                       //gpio_set_level(IO_P67, 1);
+   96                       //gpio_set_level(IO_P76, 1);
+   97                       //gpio_set_level(IO_P74, 1);
+   98                       //gpio_set_level(IO_P77, 1);
+   99                      // gpio_set_level(IO_P75, 1);
+  100                       //laser_periodic_on    = 1;
+  101                       //laser_periodic_timer = LASER_PERIODIC_DURATION;   // 脉冲保持
+  102                   //}
+  103               //}
+  104           //}
+  105          // ============================================================
+  106          
+  107          void buzzer_pit_handler(void)
+  108          {
+  109   1          if(buzzer_flag && buzzer_count)
+  110   1          {
+  111   2              buzzer_count--;
+  112   2              if(buzzer_count == 0)
+  113   2              {
+  114   3                  buzzer_flag = 0;
+  115   3                  gpio_set_level(IO_P65, 0);
+  116   3              }
+  117   2          }
+  118   1        if(shot_CD != 0){
+  119   2          shot_CD-- ;
+  120   2        }
+  121   1        if(time_flag){ time_ms += 1;}
+C251 COMPILER V5.60.0,  main                                                               12/09/26  20:59:25  PAGE 3   
 
-  122   2        }
-  123   1        if(time_flag){ time_ms += 1;}
-  124   1      
-  125   1      //  laser_periodic_handler();   // ★ 周期性激光脉冲（已禁用）
-  126   1      }
-  127          
-  128          void buzzer_beep(void)
-  129          {
-  130   1          buzzer_flag = 1;
-  131   1          buzzer_count = 2;
-  132   1          gpio_set_level(IO_P65, 1);
-  133   1      }
-  134          
-  135          void main(void)
-  136          {
-  137   1      
-  138   1          clock_init(SYSTEM_CLOCK_96M);
-  139   1          debug_init();
-  140   1      
-  141   1        pit_ms_init(TIM0_PIT, 100, buzzer_pit_handler);
-  142   1        gpio_init(IO_P65, GPO, 0, GPO_PUSH_PULL);
-  143   1        buzzer_beep();
-  144   1      
-  145   1        tft180_init();
-  146   1        tft180_set_dir(TFT180_PORTAIT);
-  147   1        
-  148   1        iap_init();
-  149   1        iap_read_buff(0x00, (uint8*)flash_buff, sizeof(flash_buff));
-  150   1        button_init();
-  151   1        servo_init();
-  152   1        motor_init();
-  153   1        motor1_pid_init();
-  154   1        motor2_pid_init();
-  155   1        servo_ppd_init();
-  156   1        encoder_init();
-  157   1        up_pid1_init();
-  158   1        up_pid2_init();
-  159   1      //  gpio_init(IO_P67, GPO, 0, GPO_PUSH_PULL);   // ★ 周期性激光: P67 推挽输出（已禁用）
-  160   1      //  gpio_init(IO_P76, GPO, 0, GPO_PUSH_PULL);
-  161   1      //  gpio_init(IO_P74, GPO, 0, GPO_PUSH_PULL);
-  162   1      //  gpio_init(IO_P75, GPO, 0, GPO_PUSH_PULL);
-  163   1      //  gpio_init(IO_P77, GPO, 0, GPO_PUSH_PULL);
-  164   1        while(1)
-  165   1        {
-  166   2          if(imu660ra_init())
-  167   2          {
-  168   3            tft180_show_string(0, 0, "imu reinit.");
-  169   3          }
-  170   2          else break;
-  171   2        }
-  172   1      
-  173   1          imu_flag = 1;
-  174   1        servo_control(servo_motor_duty);
-  175   1      //  pwm_set_duty(725);
-  176   1      //  while(1);
-  177   1         while(1)
-  178   1         {
-  179   2             if(mt9v03x_init()){}
-  180   2             else break;
-  181   2         }
-  182   1         //tft180_show_int32(0, 100, 0, 1);
-  183   1          system_delay_ms(500);
-  184   1      
-  185   1            t=low_speed;
-  186   1          time_flag=1;
-  187   1          photo_flag=1;
-C251 COMPILER V5.60.0,  main                                                               12/09/26  19:11:25  PAGE 4   
+  122   1      
+  123   1      //  laser_periodic_handler();   // ★ 周期性激光脉冲（已禁用）
+  124   1      }
+  125          
+  126          void buzzer_beep(void)
+  127          {
+  128   1          buzzer_flag = 1;
+  129   1          buzzer_count = 2;
+  130   1          gpio_set_level(IO_P65, 1);
+  131   1      }
+  132          
+  133          void main(void)
+  134          {
+  135   1      
+  136   1          clock_init(SYSTEM_CLOCK_96M);
+  137   1          debug_init();
+  138   1      
+  139   1        pit_ms_init(TIM0_PIT, 100, buzzer_pit_handler);
+  140   1        gpio_init(IO_P65, GPO, 0, GPO_PUSH_PULL);
+  141   1        buzzer_beep();
+  142   1      
+  143   1        tft180_init();
+  144   1        tft180_set_dir(TFT180_PORTAIT);
+  145   1        
+  146   1        iap_init();
+  147   1        iap_read_buff(0x00, (uint8*)flash_buff, sizeof(flash_buff));
+  148   1        button_init();
+  149   1        servo_init();
+  150   1        motor_init();
+  151   1        motor1_pid_init();
+  152   1        motor2_pid_init();
+  153   1        servo_ppd_init();
+  154   1        encoder_init();
+  155   1        up_pid1_init();
+  156   1        up_pid2_init();
+  157   1      //  gpio_init(IO_P67, GPO, 0, GPO_PUSH_PULL);   // ★ 周期性激光: P67 推挽输出（已禁用）
+  158   1      //  gpio_init(IO_P76, GPO, 0, GPO_PUSH_PULL);
+  159   1      //  gpio_init(IO_P74, GPO, 0, GPO_PUSH_PULL);
+  160   1      //  gpio_init(IO_P75, GPO, 0, GPO_PUSH_PULL);
+  161   1      //  gpio_init(IO_P77, GPO, 0, GPO_PUSH_PULL);
+  162   1        while(1)
+  163   1        {
+  164   2          if(imu660ra_init())
+  165   2          {
+  166   3            tft180_show_string(0, 0, "imu reinit.");
+  167   3          }
+  168   2          else break;
+  169   2        }
+  170   1      
+  171   1          imu_flag = 1;
+  172   1        servo_control(servo_motor_duty);
+  173   1      //  pwm_set_duty(725);
+  174   1      //  while(1);
+  175   1         while(1)
+  176   1         {
+  177   2             if(mt9v03x_init()){}
+  178   2             else break;
+  179   2         }
+  180   1         //tft180_show_int32(0, 100, 0, 1);
+  181   1          system_delay_ms(500);
+  182   1      
+  183   1            t=low_speed;
+  184   1          time_flag=1;
+  185   1          photo_flag=1;
+  186   1      
+  187   1           while(1)
+C251 COMPILER V5.60.0,  main                                                               12/09/26  20:59:25  PAGE 4   
 
-  188   1      
-  189   1           while(1)
-  190   1            {
-  191   2      
-  192   2              int16 left_edge, right_edge;
-  193   2                uint8 last_element;
-  194   2              static uint8 stable_element = 0;
-  195   2              static uint8 elem_candidate = 0;
-  196   2              static uint8 elem_debounce = 0;
-  197   2      
-  198   2              if(mt9v03x_finish_flag)
-  199   2              {
-  200   3                L_Boundary_Limit = (L_Up_Turn_Left_Point_Flag_1 == 1 && R_Up_Turn_Right_Point_Flag_1 == 0 && R_Strai
+  188   1            {
+  189   2      
+  190   2              int16 left_edge, right_edge;
+  191   2              static uint8 stable_element = 0;
+  192   2              static uint8 elem_candidate = 0;
+  193   2              static uint8 elem_debounce = 0;
+  194   2      
+  195   2              if(mt9v03x_finish_flag)
+  196   2              {
+  197   3                L_Boundary_Limit = (L_Up_Turn_Left_Point_Flag_1 == 1 && R_Up_Turn_Right_Point_Flag_1 == 0 && R_Strai
              -ght_Flag == 1) ? 65 : 48;
-  201   3                R_Boundary_Limit = (R_Up_Turn_Right_Point_Flag_1 == 1 && L_Up_Turn_Left_Point_Flag_1 == 0 && L_Strai
+  198   3                R_Boundary_Limit = (R_Up_Turn_Right_Point_Flag_1 == 1 && L_Up_Turn_Left_Point_Flag_1 == 0 && L_Strai
              -ght_Flag == 1) ? 65 : 48;
-  202   3      
-  203   3                Process_Image();
-  204   3      
-  205   3            Get_Information();
-  206   3            Element = Element_Judgement(Find_Line_Image, Adaptive_L_Statics, Adaptive_R_Statics, Adaptive_L_Grow_D
+  199   3      
+  200   3                Process_Image();
+  201   3      
+  202   3            Get_Information();
+  203   3            Element = Element_Judgement(Find_Line_Image, Adaptive_L_Statics, Adaptive_R_Statics, Adaptive_L_Grow_D
              -ir, Adaptive_R_Grow_Dir, Adaptive_L_Line, Adaptive_R_Line, Adaptive_X_Meet, Adaptive_Y_Meet, L_Border, R_Border);
-  207   3            tft180_show_int32(50, 64, Element,8);
-  208   3            if (Element != elem_candidate) {
-  209   4                elem_candidate = Element;
-  210   4                elem_debounce = 0;
-  211   4            } else {
-  212   4                elem_debounce++;
-  213   4                if (elem_debounce >= 3) {     // ����3֡һ�²��л�
-  214   5                    stable_element = elem_candidate;
-  215   5                }
-  216   4            }
-  217   3      //        tft180_show_int32(0, 100, L_Straight_Flag, 3);
-  218   3      //      tft180_show_int32(30, 100,  R_Straight_Flag, 3);
-  219   3      //      tft180_show_int32(60, 100,  Adaptive_Y_Meet, 1);
-  220   3      //      tft180_show_int32(90, 100,  Adaptive_X_Meet, 1);
-  221   3      
-  222   3          switch(stable_element){
-  223   4            case 2: //  Straightaway
-  224   4            {
-  225   5                Get_Middle_Line(L_Border , R_Border , C_Line , Image_Y - 3 , 0);
-  226   5              Get_Straight_Deviation_Value(2, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
-  227   5      
-  228   5              {
-  229   6                  uint8 far_row   = Adaptive_Y_Meet + 3;
-  230   6                  int16 far_width  = (int16)R_Border[far_row] - (int16)L_Border[far_row];
-  231   6                  int16 near_width = (int16)R_Border[50] - (int16)L_Border[50];
-  232   6      
-  233   6                  if(far_width < near_width * 3 / 4)
-  234   6                      t = low_speed - 15;
-  235   6                  else if(far_width < near_width * 7 / 8)
-  236   6                      t = low_speed;
-  237   6                  else if(My_ABS(Deviation_Value) >= 15)
-  238   6                      t = low_speed - 18;
-  239   6                  else
-  240   6                      t = high_speed - 17;
-  241   6              }
-  242   5      
-  243   5              ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line, L_Border, R_Border);
-  244   5              speed_control();
-  245   5              break;
-  246   5      
-  247   5            }
-  248   4            case 3: //   L_Turn
-  249   4            {
-  250   5              if(My_ABS(Deviation_Value) >= 35)
-C251 COMPILER V5.60.0,  main                                                               12/09/26  19:11:25  PAGE 5   
+  204   3            tft180_show_int32(50, 64, Element,8);
+  205   3            if (Element != elem_candidate) {
+  206   4                elem_candidate = Element;
+  207   4                elem_debounce = 0;
+  208   4            } else {
+  209   4                elem_debounce++;
+  210   4                if (elem_debounce >= 3) {     // ����3֡һ�²��л�
+  211   5                    stable_element = elem_candidate;
+  212   5                }
+  213   4            }
+  214   3      //        tft180_show_int32(0, 100, L_Straight_Flag, 3);
+  215   3      //      tft180_show_int32(30, 100,  R_Straight_Flag, 3);
+  216   3      //      tft180_show_int32(60, 100,  Adaptive_Y_Meet, 1);
+  217   3      //      tft180_show_int32(90, 100,  Adaptive_X_Meet, 1);
+  218   3      
+  219   3      
+  220   3      
+  221   3          switch(stable_element){
+  222   4            case 2: //  Straightaway
+  223   4            {
+  224   5                Get_Middle_Line(L_Border , R_Border , C_Line , Image_Y - 3 , 0);
+  225   5              Get_Straight_Deviation_Value(2, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
+  226   5      
+  227   5              {
+  228   6                  uint8 far_row   = Adaptive_Y_Meet + 3;
+  229   6                  int16 far_width  = (int16)R_Border[far_row] - (int16)L_Border[far_row];
+  230   6                  int16 near_width = (int16)R_Border[50] - (int16)L_Border[50];
+  231   6                
+  232   6                  // 丢线保护: 远处或近处任一侧边线丢失时(L_Border==3/R_Border==76),
+  233   6                  // far_width 会被撑到 ~73 虚高, 误判为开阔直道而加速 -> 入弯前冲一下
+  234   6                  if(L_Border[far_row] == 3 || R_Border[far_row] == 76 ||
+  235   6                     L_Border[50]     == 3 || R_Border[50]     == 76)
+  236   6                  {
+  237   7                      t = low_speed - 15;
+  238   7                  }
+  239   6                  else if(far_width > near_width )
+  240   6                      t = low_speed - 15;
+  241   6                  else
+  242   6                      t = high_speed;
+  243   6              }
+  244   5      
+  245   5              ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line, L_Border, R_Border);
+  246   5              speed_control();
+  247   5              break;
+  248   5      
+  249   5            }
+  250   4            case 3: //   L_Turn
+C251 COMPILER V5.60.0,  main                                                               12/09/26  20:59:25  PAGE 5   
 
-  251   5                t = low_speed - 18;
-  252   5              else if(My_ABS(Deviation_Value) >= 20)
-  253   5                t = low_speed - 13;
-  254   5              else
-  255   5                t = low_speed - 10;
-  256   5              Get_Middle_Line(L_Border , R_Border , C_Line , Image_Y - 3 , 0);
-  257   5              Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
-  258   5      
-  259   5              ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line , L_Border , R_Border);
+  251   4            {
+  252   5              if(My_ABS(Deviation_Value) >= 35)
+  253   5                t = low_speed - 18;
+  254   5              else if(My_ABS(Deviation_Value) >= 20)
+  255   5                t = low_speed - 13;
+  256   5              else
+  257   5                t = low_speed - 10;
+  258   5              Get_Middle_Line(L_Border , R_Border , C_Line , Image_Y - 3 , 0);
+  259   5              Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
   260   5      
-  261   5            speed_control();
+  261   5              ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line , L_Border , R_Border);
   262   5      
-  263   5              break;
-  264   5            }
-  265   4            case 4: //   R_Turn
-  266   4            {
-  267   5              if(My_ABS(Deviation_Value) >= 35)
-  268   5                t = low_speed - 18;
-  269   5              else if(My_ABS(Deviation_Value) >= 20)
-  270   5                t = low_speed - 13;
-  271   5              else
-  272   5                t = low_speed - 10;
-  273   5              Get_Middle_Line(L_Border , R_Border , C_Line , Image_Y - 3 , 0);
-  274   5              Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
-  275   5      
-  276   5              ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line , L_Border , R_Border);
+  263   5            speed_control();
+  264   5      
+  265   5              break;
+  266   5            }
+  267   4            case 4: //   R_Turn
+  268   4            {
+  269   5              if(My_ABS(Deviation_Value) >= 35)
+  270   5                t = low_speed - 18;
+  271   5              else if(My_ABS(Deviation_Value) >= 20)
+  272   5                t = low_speed - 13;
+  273   5              else
+  274   5                t = low_speed - 10;
+  275   5              Get_Middle_Line(L_Border , R_Border , C_Line , Image_Y - 3 , 0);
+  276   5              Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
   277   5      
-  278   5              speed_control();
+  278   5              ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line , L_Border , R_Border);
   279   5      
-  280   5              break;
-  281   5            }
-  282   4            case 5: //   L_Circle
-  283   4            {
-  284   5              t=low_speed - 25;
-  285   5              L_Circle_Process( );
-  286   5              break;
-  287   5            }
-  288   4            case 6: //   R_Circle
-  289   4            {
-  290   5              t=low_speed - 25;
-  291   5              L_Boundary_Limit = 35; R_Boundary_Limit = 35;
-  292   5              R_Circle_Process( );
-  293   5              break;
-  294   5            }
-  295   4            case 18: //   Small_s
-  296   4            {;
-  297   5            }
-  298   4            default :
-  299   4              t = low_speed - 18;
-  300   4              Get_Middle_Line(L_Border , R_Border , C_Line , Image_Y - 3 , 0);
-  301   4              Get_Straight_Deviation_Value(last_element, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
-  302   4              ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line , L_Border , R_Border);
-  303   4              speed_control();
-  304   4          }
-  305   3          last_element = Element;
-  306   3      
-  307   3            tft180_show_gray_image(0, 0,
-  308   3              (const uint8 *)Find_Line_Image,
-  309   3                    Image_X,
-  310   3                    Image_Y,
-  311   3                     80,
-  312   3                     60,
-  313   3                     0);
-  314   3            Draw_Border_Points_1(Adaptive_L_Line, Adaptive_R_Line, C_Line , Adaptive_L_Statics, Adaptive_R_Statics
+  280   5              speed_control();
+  281   5      
+  282   5              break;
+  283   5            }
+  284   4            case 5: //   L_Circle
+  285   4            {
+  286   5              t=low_speed - 25;
+  287   5              L_Circle_Process( );
+  288   5              break;
+  289   5            }
+  290   4            case 6: //   R_Circle
+  291   4            {
+  292   5              t=low_speed - 25;
+  293   5              L_Boundary_Limit = 35; R_Boundary_Limit = 35;
+  294   5              R_Circle_Process( );
+  295   5              break;
+  296   5            }
+  297   4            case 18: //   Small_s
+  298   4            {;
+  299   5            }
+  300   4            default :
+  301   4              t = low_speed - 18;
+  302   4              Get_Middle_Line(L_Border , R_Border , C_Line , Image_Y - 3 , 0);
+  303   4              Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
+  304   4              ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line , L_Border , R_Border);
+  305   4              speed_control();
+  306   4          }
+  307   3      
+  308   3            tft180_show_gray_image(0, 0,
+  309   3              (const uint8 *)Find_Line_Image,
+  310   3                    Image_X,
+  311   3                    Image_Y,
+  312   3                     80,
+  313   3                     60,
+  314   3                     0);
+  315   3            Draw_Border_Points_1(Adaptive_L_Line, Adaptive_R_Line, C_Line , Adaptive_L_Statics, Adaptive_R_Statics
              -);
-  315   3      //      draw_target_center();
-C251 COMPILER V5.60.0,  main                                                               12/09/26  19:11:25  PAGE 6   
+C251 COMPILER V5.60.0,  main                                                               12/09/26  20:59:25  PAGE 6   
 
-  316   3                  mt9v03x_finish_flag = 0;
-  317   3              }
-  318   2      
-  319   2          }
-  320   1      }
-*** WARNING C47 IN LINE 192 OF ..\user\main.c: 'left_edge': unreferenced local variable
-*** WARNING C47 IN LINE 192 OF ..\user\main.c: 'right_edge': unreferenced local variable
+  316   3      //      draw_target_center();
+  317   3                  mt9v03x_finish_flag = 0;
+  318   3              }
+  319   2      
+  320   2          }
+  321   1      }
+*** WARNING C47 IN LINE 190 OF ..\user\main.c: 'left_edge': unreferenced local variable
+*** WARNING C47 IN LINE 190 OF ..\user\main.c: 'right_edge': unreferenced local variable
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
   code size            =    ------     ------
-  ecode size           =      1986     ------
+  ecode size           =      1963     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =      7544     ------
+  xdata size           =      7543     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

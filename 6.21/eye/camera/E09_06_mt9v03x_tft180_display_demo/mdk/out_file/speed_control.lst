@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  speed_control                                                      12/09/26  19:11:28  PAGE 1   
+C251 COMPILER V5.60.0,  speed_control                                                      12/09/26  20:59:28  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE speed_control
@@ -66,7 +66,7 @@ stmt  level    source
    53   2      //        servo_motor_duty = 3000;
    54   2      //        servo_control(servo_motor_duty);
    55   2      //      }
-C251 COMPILER V5.60.0,  speed_control                                                      12/09/26  19:11:28  PAGE 2   
+C251 COMPILER V5.60.0,  speed_control                                                      12/09/26  20:59:28  PAGE 2   
 
    56   2      //      else
    57   2      //      {
@@ -134,7 +134,7 @@ stmt  level    source
   119   2      
   120   2          }
   121   1          
-C251 COMPILER V5.60.0,  speed_control                                                      12/09/26  19:11:28  PAGE 3   
+C251 COMPILER V5.60.0,  speed_control                                                      12/09/26  20:59:28  PAGE 3   
 
   122   1      //    if((encoder_data_dir_1<30&&motor2_pid.Out>5000)||(encoder_data_dir_2<30&&motor2_pid.Out>5000))  //·
              -À¶Â×ª

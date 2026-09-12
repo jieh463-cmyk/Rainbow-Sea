@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_driver_exti                                                     12/09/26  19:11:20  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_exti                                                     12/09/26  20:59:20  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_exti
@@ -66,7 +66,7 @@ stmt  level    source
    49          void exit_init(INTN_enum int_n,INT_MODE_enum mode)
    50          {
    51   1        if(INT0_P32 == int_n)
-C251 COMPILER V5.60.0,  zf_driver_exti                                                     12/09/26  19:11:20  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_exti                                                     12/09/26  20:59:20  PAGE 2   
 
    52   1        {
    53   2              switch(mode)
@@ -134,7 +134,7 @@ stmt  level    source
   114   2          
   115   2          switch(mode)//初始化中断模式
   116   2          {
-C251 COMPILER V5.60.0,  zf_driver_exti                                                     12/09/26  19:11:20  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_exti                                                     12/09/26  20:59:20  PAGE 3   
 
   117   3            case FALLING_EDGE: 
   118   3                (*(unsigned char volatile far *)(0X7EF4E0 + ((int_n >> 8) & 0X0F) )) &= ~(1 << (int_n & 0x000F));

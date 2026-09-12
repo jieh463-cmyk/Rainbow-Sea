@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_device_type                                                     12/09/26  19:11:21  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_type                                                     12/09/26  20:59:21  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_type
@@ -66,7 +66,7 @@ stmt  level    source
    47          callback_function   wireless_module_spi_handler     = type_default_callback;        // WIFI SPI GPIOÖÐ¶Ïº
              -¯ÊýÖ¸Õë£¬¸ù¾Ý³õÊ¼»¯Ê±ÉèÖÃµÄº¯Êý½øÐÐÌø×ª
    48          
-C251 COMPILER V5.60.0,  zf_device_type                                                     12/09/26  19:11:21  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_type                                                     12/09/26  20:59:21  PAGE 2   
 
    49          tof_type_enum       tof_type                        = NO_TOF;
    50          callback_function   tof_module_exti_handler         = type_default_callback;        // ToF Ä£¿é INT ¸üÐÂÖ
@@ -134,7 +134,7 @@ stmt  level    source
   102          
   103          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_device_type                                                     12/09/26  19:11:21  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_type                                                     12/09/26  20:59:21  PAGE 3   
 
   104          // º¯Êý¼ò½é     ÉèÖÃ ToF Ä£¿éÀàÐÍ
   105          // ²ÎÊýËµÃ÷     type_set        Ñ¡¶¨µÄ ToF Ä£¿éÀàÐÍ

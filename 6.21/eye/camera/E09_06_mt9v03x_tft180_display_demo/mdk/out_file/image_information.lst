@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 1   
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE image_information
@@ -66,7 +66,7 @@ stmt  level    source
    51          * @param uint8 *border              输入需要计算斜率的边界
    52          * @param int16 *slope_rate          输入斜率地址 *100
    53          * @param int16 *intercept           输入截距地址
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 2   
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 2   
 
    54          *  @see CTest       calculate_s_i(start, end, r_border, &slope_l_rate, &intercept_l);
    55          * @return 返回说明
@@ -134,7 +134,7 @@ stmt  level    source
   112   3                  if(start % 3 == 1)
 *** WARNING C173 IN LINE 112 OF ..\image_information\image_information.c: '==': signed/unsigned type mismatch
   113   3                  {
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 3   
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 3   
 
   114   4                      break;
   115   4                  }
@@ -202,7 +202,7 @@ stmt  level    source
              -tive_L_Grow_Dir[i] == -2 || Adaptive_L_Grow_Dir[i] == -3))
   175   5                          {
   176   6                              L_Up_Turn_Left_Point_1[0] = Adaptive_L_Line[i][0];
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 4   
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 4   
 
   177   6                              L_Up_Turn_Left_Point_1[1] = Adaptive_L_Line[i][1];
   178   6                              L_Up_Turn_Left_Point_Flag_1  = 1;
@@ -270,7 +270,7 @@ stmt  level    source
   228   1      //    }
   229   1      }
   230          
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 5   
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 5   
 
   231          /**
   232          * 函数功能：      寻找上转左拐点
@@ -338,7 +338,7 @@ stmt  level    source
   294   1      }
   295          
   296          /**
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 6   
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 6   
 
   297          * 函数功能：      寻找右转上拐点
   298          * 特殊说明：      分为三个严格等级，根据每个点的生长方向判断
@@ -406,7 +406,7 @@ stmt  level    source
   352   5                          {
   353   6                              L_Right_Turn_Up_Point_1[0] = Adaptive_L_Line[i][0];
   354   6                              L_Right_Turn_Up_Point_1[1] = Adaptive_L_Line[i][1];
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 7   
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 7   
 
   355   6                              L_Right_Turn_Up_Point_Flag_1  = 1;
   356   6                              break;
@@ -474,7 +474,7 @@ stmt  level    source
   411   2              Region_Start = 2;
   412   2          }
   413   1          if(Region_Start <= Region_End)
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 8   
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 8   
 
   414   1          {
   415   2              for(i = Region_Start; i <= Region_End; i++)
@@ -542,7 +542,7 @@ stmt  level    source
   477   1          if(Adaptive_R_Statics < 8)
   478   1          {
   479   2              return;
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 9   
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 9   
 
   480   2          }
   481   1      
@@ -610,7 +610,7 @@ stmt  level    source
   530   5                          {
   531   6                              R_Up_Turn_Right_Point_1[0] = Adaptive_R_Line[i][0];
   532   6                              R_Up_Turn_Right_Point_1[1] = Adaptive_R_Line[i][1];
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 10  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 10  
 
   533   6                              R_Up_Turn_Right_Point_Flag_1 = 1;
   534   6                              break;
@@ -678,7 +678,7 @@ stmt  level    source
   595   1          R_Up_Turn_Right_Point_Flag = 0;
   596   1          Get_R_Up_Turn_Right_Point_1(2);
   597   1          if(R_Up_Turn_Right_Point_Flag_1 == 1 && R_Up_Turn_Right_Point_1[1] >= 7)
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 11  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 11  
 
   598   1          {
   599   2              R_Up_Turn_Right_Point_Flag_1 = 0;
@@ -746,7 +746,7 @@ stmt  level    source
   657   4                  }
   658   3                  break;
   659   3              }
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 12  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 12  
 
   660   2              case 2:
   661   2              {
@@ -814,7 +814,7 @@ stmt  level    source
   711          *
   712          * 示例：          Get_R_Left_Turn_Up_Point_2(2, 57);
   713          * 返回值：        无
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 13  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 13  
 
   714          */
   715          uint8 R_Left_Turn_Up_Point_2[2] = {0};
@@ -882,7 +882,7 @@ stmt  level    source
   777          uint8 L_Arc_Turn_Point_Num = 0;     //记录找到的个数
   778          void Get_L_Arc_Turn_Point(void)
   779          {
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 14  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 14  
 
   780   1          uint8 i = 0;
   781   1          L_Arc_Turn_Point_Flag = 0;
@@ -950,7 +950,7 @@ stmt  level    source
   832   5                          L_Arc_Turn_Point_Flag = 1;
   833   5                          L_Arc_Turn_Point_Num ++;
   834   5                          if(i <= (Adaptive_L_Statics - 5 - 15))   // 防止溢出
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 15  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 15  
 
   835   5                          {
   836   6                              i += 15;
@@ -1018,7 +1018,7 @@ stmt  level    source
   893   5                      }
   894   4                  }
   895   3              }
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 16  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 16  
 
   896   2          }
   897   1      
@@ -1086,7 +1086,7 @@ stmt  level    source
   953   1          R_Straightaway_Lope_Rate_A = Slope_Calculate(start, ((end - start) / 2) + start, R_Border);
   954   1          R_Straightaway_Lope_Rate_B = Slope_Calculate(((end - start) / 2) + start, end, R_Border);       //计
              -算两段斜率
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 17  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 17  
 
   955   1          Calculate_Slope_Intercept(start, end, R_Border, &R_Straightaway_Lope_Rate_C, &R_Intercept);     //计
              -算整段边线斜率和截距
@@ -1154,7 +1154,7 @@ stmt  level    source
  1009          //* 函数功能：      计算左右两侧边线的方差
  1010          //* 特殊说明：      每三行计算一次，减少计算量，但获取的信息不那么精确，�
              -�以选择计算每一行
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 18  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 18  
 
  1011          //* 形  参：        无
  1012          //*
@@ -1222,7 +1222,7 @@ stmt  level    source
  1070   1          {
  1071   2              for(i = 40; i < Adaptive_L_Statics - 2; i++)
  1072   2              {
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 19  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 19  
 
  1073   3                  if(Adaptive_L_Line[i][1] == 2)   //顶部的边界点使用二维边线
  1074   3                  {
@@ -1290,7 +1290,7 @@ stmt  level    source
  1135   1          for(i = Adaptive_Y_Meet; i < Adaptive_L_Start_Point[1]; i++)
  1136   1          {
  1137   2              if(L_Border[i] == 3 && R_Border[i] == 76)   //2为左侧边界的X坐标，77为右侧边界
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 20  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 20  
 
  1138   2              {
  1139   3                  Relative_Border_Point_Num ++;
@@ -1358,7 +1358,7 @@ stmt  level    source
  1200   1      //    {
  1201   1      //        Barrier_Distance = TOF_Get_Distance_mm();
  1202   1      //    }
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 21  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 21  
 
  1203   1      }
  1204          
@@ -1426,7 +1426,7 @@ stmt  level    source
  1261   4                  }
  1262   3              
  1263   3            break;
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 22  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 22  
 
  1264   3      //        uint8 eff_start;
  1265   3      //        static const uint8 Weight_2[60] = {
@@ -1494,7 +1494,7 @@ stmt  level    source
  1321   5                  {
  1322   6                  //if(c_line[i] == 39)continue;
  1323   6                    Sum += (int32)Weight_2[i] * c_line[i];
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 23  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 23  
 
  1324   6                    Weight_Sum += Weight_2[i];
  1325   6                  } 
@@ -1562,7 +1562,7 @@ stmt  level    source
  1381   2      //      } 
  1382   2          
  1383   2          //新表
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 24  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 24  
 
  1384   2      //    default :
  1385   2      //      {
@@ -1630,7 +1630,7 @@ stmt  level    source
  1443   1      //  }
  1444   1        
  1445   1        if(Weight_Sum == 0)
-C251 COMPILER V5.60.0,  image_information                                                  12/09/26  19:11:26  PAGE 25  
+C251 COMPILER V5.60.0,  image_information                                                  12/09/26  20:59:26  PAGE 25  
 
  1446   1          {
  1447   2              Deviation_Value = Last_Deviation_Value;

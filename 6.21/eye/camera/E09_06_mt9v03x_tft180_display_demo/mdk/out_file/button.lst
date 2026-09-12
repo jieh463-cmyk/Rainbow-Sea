@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  button                                                             12/09/26  19:11:27  PAGE 1   
+C251 COMPILER V5.60.0,  button                                                             12/09/26  20:59:27  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE button
@@ -66,7 +66,7 @@ stmt  level    source
    53   1              key4_status = gpio_get_level(KEY4_PIN);
    54   1              
    55   1              if(key1_status && !key1_last_status)    key1_flag = 1;
-C251 COMPILER V5.60.0,  button                                                             12/09/26  19:11:27  PAGE 2   
+C251 COMPILER V5.60.0,  button                                                             12/09/26  20:59:27  PAGE 2   
 
    56   1              if(key2_status && !key2_last_status)    key2_flag = 1;
    57   1              if(key3_status && !key3_last_status)    key3_flag = 1;
@@ -134,7 +134,7 @@ stmt  level    source
   119   4                          case 1: motor2_pid.Ki += 1; break;
   120   4                          case 2: motor2_pid.Kd += 1; break;
   121   4                          case 3: t += 10; break;
-C251 COMPILER V5.60.0,  button                                                             12/09/26  19:11:27  PAGE 3   
+C251 COMPILER V5.60.0,  button                                                             12/09/26  20:59:27  PAGE 3   
 
   122   4      
   123   4                      }
@@ -202,7 +202,7 @@ stmt  level    source
   185   3                  tft180_show_string(0 , 0*16, "->p:");   tft180_show_int16(11*6, 0*16, motor1_pid.Kp);
   186   3                }
   187   2                else 
-C251 COMPILER V5.60.0,  button                                                             12/09/26  19:11:27  PAGE 4   
+C251 COMPILER V5.60.0,  button                                                             12/09/26  20:59:27  PAGE 4   
 
   188   2                {
   189   3                  tft180_show_string(0 , 0*16, "  p:");   tft180_show_int16(11*6, 0*16, motor1_pid.Kp);
@@ -270,7 +270,7 @@ stmt  level    source
   251   3                }
   252   2                if(test2==2)
   253   2                {
-C251 COMPILER V5.60.0,  button                                                             12/09/26  19:11:27  PAGE 5   
+C251 COMPILER V5.60.0,  button                                                             12/09/26  20:59:27  PAGE 5   
 
   254   3                  tft180_show_string(0 , 2*16, "->d:");   tft180_show_int16(11*6, 2*16, motor2_pid.Kd);
   255   3                }
@@ -338,7 +338,7 @@ stmt  level    source
   317   2                else 
   318   2                {
   319   3                  tft180_show_string(0 , 3*16, "  p2:");   tft180_show_int16(11*6, 3*16, servo_pid.Kp2);
-C251 COMPILER V5.60.0,  button                                                             12/09/26  19:11:27  PAGE 6   
+C251 COMPILER V5.60.0,  button                                                             12/09/26  20:59:27  PAGE 6   
 
   320   3                }
   321   2                

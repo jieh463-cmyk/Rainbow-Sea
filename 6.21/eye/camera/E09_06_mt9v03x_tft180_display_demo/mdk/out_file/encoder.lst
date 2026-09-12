@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  encoder                                                            12/09/26  19:11:27  PAGE 1   
+C251 COMPILER V5.60.0,  encoder                                                            12/09/26  20:59:27  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE encoder
@@ -66,7 +66,7 @@ stmt  level    source
    44          //      DIR                 ENCODER_DIR_DIR_1   ºê¶¨ÒåµÄÒý½Å  Ä¬ÈÏ P62
    45          //      GND                 ºËÐÄ°åµçÔ´µØ GND
    46          //      3V3                 ºËÐÄ°å 3V3 µçÔ´
-C251 COMPILER V5.60.0,  encoder                                                            12/09/26  19:11:27  PAGE 2   
+C251 COMPILER V5.60.0,  encoder                                                            12/09/26  20:59:27  PAGE 2   
 
    47          //
    48          //      LSB                 ENCODER_DIR_PULSE_2 ºê¶¨ÒåµÄÒý½Å  Ä¬ÈÏ P40
@@ -134,7 +134,7 @@ stmt  level    source
   101          int16 flash_buff[]={1,1,0,0,19,0,0,0,0,0};///PID
   102          int16 down_buff[10]={0};
   103          
-C251 COMPILER V5.60.0,  encoder                                                            12/09/26  19:11:27  PAGE 3   
+C251 COMPILER V5.60.0,  encoder                                                            12/09/26  20:59:27  PAGE 3   
 
   104          int8 up_flag=0;///0或者1
   105          
@@ -190,7 +190,7 @@ stmt  level    source
   155   1      //  servo_pid.Kp2 = flash_buff[8];           //7     
   156   1      //  servo_pid.Kd1 = flash_buff[5];      //50          //flash_buff[5] 5
   157   1      //  servo_pid.Kd2 = flash_buff[6];            //40   //flash_buff[6]  20
-  158   1        servo_pid.Kp1 = 45;  // 原27，降低以减少直道晃动  41        //  35  速度120  //24
+  158   1        servo_pid.Kp1 = 30;  // 原27，降低以减少直道晃动  41        //  35  速度120  //24
   159   1        servo_pid.Kp2 = 3;           //   0
   160   1        servo_pid.Kd1 = 12;     //50          //flash_buff[5] 5
   161   1        servo_pid.Kd2 = -165;            //40   //flash_buff[6]  20        52 3 6 -190       40 3 6 -185
@@ -202,7 +202,7 @@ stmt  level    source
   167   1      //  servo_pid.Kd2 = -200;            //40   //flash_buff[6]  20因为转向陀螺仪安装反向，因此�
              -��修改
   168   1        
-C251 COMPILER V5.60.0,  encoder                                                            12/09/26  19:11:27  PAGE 4   
+C251 COMPILER V5.60.0,  encoder                                                            12/09/26  20:59:27  PAGE 4   
 
   169   1        servo_pid.servoMax= 390;
   170   1        servo_pid.servoMin= -390;
@@ -270,7 +270,7 @@ stmt  level    source
   222   1      //      shot_CD_flag = 0;
   223   1      //      shot_CD_cnt = 0; 
   224   1      //      gpio_set_level(IO_P76, 0);
-C251 COMPILER V5.60.0,  encoder                                                            12/09/26  19:11:27  PAGE 5   
+C251 COMPILER V5.60.0,  encoder                                                            12/09/26  20:59:27  PAGE 5   
 
   225   1      //      gpio_set_level(IO_P74, 0);
   226   1      //      gpio_set_level(IO_P77, 0);

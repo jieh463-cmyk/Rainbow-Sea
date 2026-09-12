@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  19:11:28  PAGE 1   
+C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  20:59:29  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE L_circle_process
@@ -66,7 +66,7 @@ stmt  level    source
    50   8                                      Temp_Num ++;
    51   8                                  }
    52   7                              }
-C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  19:11:28  PAGE 2   
+C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  20:59:29  PAGE 2   
 
    53   6                  
    54   6                              if(Temp_Num >= 14 )
@@ -134,7 +134,7 @@ stmt  level    source
   114   4            }
   115   3            case 2:
   116   3            {
-C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  19:11:28  PAGE 3   
+C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  20:59:29  PAGE 3   
 
   117   4              uint8 Num = 0;
   118   4              
@@ -202,7 +202,7 @@ stmt  level    source
   178   5                
   179   5                         buzzer_beep();
   180   5                          L_Circle_State = 4;
-C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  19:11:28  PAGE 4   
+C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  20:59:29  PAGE 4   
 
   181   5      
   182   5                          Image_Count = 0;
@@ -270,7 +270,7 @@ stmt  level    source
   241   4              Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
   242   4      
   243   4              speed_control();
-C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  19:11:28  PAGE 5   
+C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  20:59:29  PAGE 5   
 
   244   4              //tft180_show_int16(0, 100, err + 5);
   245   4              
@@ -338,7 +338,7 @@ stmt  level    source
   306   2        }
   307   1        
   308   1      }
-C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  19:11:28  PAGE 6   
+C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  20:59:29  PAGE 6   
 
 
 

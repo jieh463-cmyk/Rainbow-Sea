@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  servo                                                              12/09/26  19:11:28  PAGE 1   
+C251 COMPILER V5.60.0,  servo                                                              12/09/26  20:59:28  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE servo
@@ -66,7 +66,7 @@ stmt  level    source
    42          //      PWM1                A0
    43          //      PWM2                A2
    44          //      PWM3                A4
-C251 COMPILER V5.60.0,  servo                                                              12/09/26  19:11:28  PAGE 2   
+C251 COMPILER V5.60.0,  servo                                                              12/09/26  20:59:28  PAGE 2   
 
    45          //      PWM4                A6
    46          //      GND                 ¶æ»úµçÔ´ GND ÁªÍ¨ ºËÐÄ°åµçÔ´µØ GND
@@ -134,7 +134,7 @@ stmt  level    source
    97   1           pwm_init(SERVO_PWM1, SERVO_FREQ, 0);  // PA0
    98   1           pwm_init(SERVO_PWM2, SERVO_FREQ, 0);  // PA2
    99   1           pwm_init(SERVO_PWM3, SERVO_FREQ, 0);  // PA4
-C251 COMPILER V5.60.0,  servo                                                              12/09/26  19:11:28  PAGE 3   
+C251 COMPILER V5.60.0,  servo                                                              12/09/26  20:59:28  PAGE 3   
 
   100   1           pwm_init(SERVO_PWM4, SERVO_FREQ, 0);  // PA6
   101   1      

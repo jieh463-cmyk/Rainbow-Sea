@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 1   
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE element_judge
@@ -66,7 +66,7 @@ stmt  level    source
    51          uint8 shot_CD_flag = 0;
    52          uint8 shot_CD_cnt = 0;
    53          
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 2   
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 2   
 
    54          uint16 shot_center_x = 0;
    55          uint16 shot_center_y = 0;
@@ -134,7 +134,7 @@ stmt  level    source
   113   2              //        }
   114   2          }
   115   1      
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 3   
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 3   
 
   116   1          //左弯道判断
   117   1          if (Element_t == 0 && L_Turn_Flag != 0)
@@ -202,7 +202,7 @@ stmt  level    source
   173   2             {
   174   3                 // 右侧中段有效性检查：中段大量落在黑框=刚恢复丢线=S弯，非环岛
   175   3                 r_bottom_lost = 0;
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 4   
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 4   
 
   176   3                 for (i = 5; i < 30; i++) {
   177   4                     if (R_Border[i] >= 76) r_bottom_lost++;
@@ -270,7 +270,7 @@ stmt  level    source
   233   5                         {
   234   6                             if (Relative_Border_Point_Num <= 3)
   235   6                             {
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 5   
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 5   
 
   236   7                                 //buzzer_flag = 1;
   237   7                                 Element_t = L_Circle;
@@ -338,7 +338,7 @@ stmt  level    source
   295   1      //                }
   296   1      //                if (L_Border[i] != 3 && R_Border[i] == 76)
   297   1      //                {
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 6   
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 6   
 
   298   1      //                    Temp_Num++;
   299   1      //                }
@@ -406,7 +406,7 @@ stmt  level    source
   356   3                  {
   357   4                      uint8 Temp_Num = 0;
   358   4                      for (i = 0; i < Adaptive_L_Statics / 2; i++)
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 7   
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 7   
 
   359   4                      {
   360   5                          if (Adaptive_L_Grow_Dir[i] == -3 || Adaptive_L_Grow_Dir[i] == 3)
@@ -474,7 +474,7 @@ stmt  level    source
   417   2      (L_Straightaway_Lope_Rate_A > L_Straightaway_Lope_Rate_C) ? (L_Straightaway_Lope_Rate_A - L_Straightaway_
              -Lope_Rate_C) : (L_Straightaway_Lope_Rate_C - L_Straightaway_Lope_Rate_A)  <= Min_Slope_Dif_Thre  && 
   418   2      (L_Straightaway_Lope_Rate_B > L_Straightaway_Lope_Rate_C) ? (L_Straightaway_Lope_Rate_B - L_Straightaway_
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 8   
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 8   
 
              -Lope_Rate_C) : (L_Straightaway_Lope_Rate_C - L_Straightaway_Lope_Rate_B)  <= Min_Slope_Dif_Thre     )
   419   2           {
@@ -542,7 +542,7 @@ stmt  level    source
   479   1      ////                    if (Relative_Border_Point_Num <= 3)
   480   1      ////                    {
   481   1      //                        //buzzer_flag = 1;
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 9   
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 9   
 
   482   1      //                        Element_t = R_Circle;
   483   1      //            //R_C_cnt++;
@@ -610,7 +610,7 @@ stmt  level    source
   543   1         //                    uint8 j = 0;
   544   1         //                    uint8 Temp_Num = 0;
   545   1         //                    for(i = Temp_Y - 5; i < Temp_Y; i++)
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 10  
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 10  
 
   546   1         //                    {
   547   1         //                        for(j = Temp_X + 1; j < Temp_X + 6; j ++)
@@ -678,7 +678,7 @@ stmt  level    source
   600   1          // 连续多帧触发，判定真正出界
   601   1          if(Line_Lost_Flag)
   602   1          {
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 11  
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 11  
 
   603   2              Out_Bound_Cnt ++;
   604   2              if(Out_Bound_Cnt >= 3)   // 连续8帧异常=判定出界
@@ -746,7 +746,7 @@ stmt  level    source
   665   3                  end_y = R_Left_Turn_Up_Point_1[1];
   666   3              }
   667   2              else
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 12  
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 12  
 
   668   2              {
   669   3                  start_y = R_Left_Turn_Up_Point_1[1];
@@ -814,7 +814,7 @@ stmt  level    source
   730   1          uint8 start_point_down;
   731   1          
   732   1          uint8 ring_flag = 0;
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 13  
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 13  
 
   733   1      
   734   1          /* -------------------------------------------------------
@@ -882,7 +882,7 @@ stmt  level    source
              -�逻辑
   795   2              shot_center_y = shot_center_y_sum / find_cnt ;
   796   2          
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 14  
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 14  
 
   797   2              /* -------------------------------------------------------
   798   2               * 4. 垂直方向寻找圆环上下边界 (带边界保护)
@@ -949,87 +949,85 @@ stmt  level    source
   857   4                      /* -------------------------------------------------------
   858   4                       * 6. 执行动作 (仅设置电平，不重复初始化)
   859   4                       * ------------------------------------------------------- */
-  860   4      #if 0  // laser fire block disabled
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 15  
+  860   4                      //switch (lamp)
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 15  
 
-                               switch (lamp)
-                               {
-                               case 1:
-                                   gpio_init(IO_P76, GPO, 1, GPO_PUSH_PULL);
-                                   gpio_set_level(IO_P76, 1);
-               //                    system_delay_ms(50);
-               //                    gpio_set_level(IO_P76, 0);
-                                   break;
-                               case 2:
-                                   gpio_init(IO_P74, GPO, 1, GPO_PUSH_PULL);
-                                   gpio_set_level(IO_P74, 1);
-               //                    system_delay_ms(50);
-               //                    gpio_set_level(IO_P74, 0);
-                                   break;
-                               case 3:                   
-                                   gpio_init(IO_P77, GPO, 1, GPO_PUSH_PULL);
-                                   gpio_set_level(IO_P77, 1);
-               //                    system_delay_ms(50);
-               //                    gpio_set_level(IO_P77, 0);
-                                   break;
-                               case 4:
-                                   gpio_init(IO_P75, GPO, 1, GPO_PUSH_PULL);
-                                   gpio_set_level(IO_P75, 1);
-               //                    system_delay_ms(50);
-               //                    gpio_set_level(IO_P75, 0);
-                                   break;
-                               case 5:
-                                   gpio_init(IO_P67, GPO, 1, GPO_PUSH_PULL);
-                                   gpio_set_level(IO_P67, 1);
-               //                    system_delay_ms(50);
-               //                    gpio_set_level(IO_P67, 0);
-                                   break;
-                               default:
-                                   break;
-                               }
-               #endif  // laser fire block disabled
-  897   4                  }
-  898   3              }
-  899   2          //if(photo_flag == 0)
-  900   2            if(1)
-  901   2            {
-  902   3      //        tft180_show_string(0,64, "center_x:");      
-  903   3      //      tft180_show_int16(64, 64, shot_center_x);
-  904   3      //        tft180_show_string(0,80, "center_y:");      
-  905   3      //      tft180_show_int16(64, 80, shot_center_y);
-  906   3      //        tft180_show_string(0,96, "lamp:");      
-  907   3      //      tft180_show_int16(64, 96, lamp);
-  908   3              //tft180_show_int16(0, 0, 2);
-  909   3            }
-  910   2              }
-  911   1          else
-  912   1          {
-  913   2              ring_shot_flag = 0;
-  914   2          }
-  915   1      }
+  861   4                      //{
+  862   4                      //case 1:
+  863   4                          //gpio_init(IO_P76, GPO, 1, GPO_PUSH_PULL);
+  864   4                          //gpio_set_level(IO_P76, 1);
+  865   4      //                    system_delay_ms(50);
+  866   4      //                    gpio_set_level(IO_P76, 0);
+  867   4                          //break;
+  868   4                      //case 2:
+  869   4                          //gpio_init(IO_P74, GPO, 1, GPO_PUSH_PULL);
+  870   4                          //gpio_set_level(IO_P74, 1);
+  871   4      //                    system_delay_ms(50);
+  872   4      //                    gpio_set_level(IO_P74, 0);
+  873   4                          //break;
+  874   4                      //case 3:                   
+  875   4                          //gpio_init(IO_P77, GPO, 1, GPO_PUSH_PULL);
+  876   4                          //gpio_set_level(IO_P77, 1);
+  877   4      //                    system_delay_ms(50);
+  878   4      //                    gpio_set_level(IO_P77, 0);
+  879   4                          //break;
+  880   4                      //case 4:
+  881   4                          //gpio_init(IO_P75, GPO, 1, GPO_PUSH_PULL);
+  882   4                          //gpio_set_level(IO_P75, 1);
+  883   4      //                    system_delay_ms(50);
+  884   4      //                    gpio_set_level(IO_P75, 0);
+  885   4                          //break;
+  886   4                      //case 5:
+  887   4                          //gpio_init(IO_P67, GPO, 1, GPO_PUSH_PULL);
+  888   4                          //gpio_set_level(IO_P67, 1);
+  889   4      //                    system_delay_ms(50);
+  890   4      //                    gpio_set_level(IO_P67, 0);
+  891   4                          //break;
+  892   4                      //default:
+  893   4                          //break;
+  894   4                      //}
+  895   4                  }
+  896   3              }
+  897   2          //if(photo_flag == 0)
+  898   2            if(1)
+  899   2            {
+  900   3      //        tft180_show_string(0,64, "center_x:");      
+  901   3      //      tft180_show_int16(64, 64, shot_center_x);
+  902   3      //        tft180_show_string(0,80, "center_y:");      
+  903   3      //      tft180_show_int16(64, 80, shot_center_y);
+  904   3      //        tft180_show_string(0,96, "lamp:");      
+  905   3      //      tft180_show_int16(64, 96, lamp);
+  906   3              //tft180_show_int16(0, 0, 2);
+  907   3            }
+  908   2              }
+  909   1          else
+  910   1          {
+  911   2              ring_shot_flag = 0;
+  912   2          }
+  913   1      }
 *** WARNING C47 IN LINE 700 OF ..\image_information\element_judge.c: 'l_line': unreferenced parameter
 *** WARNING C47 IN LINE 700 OF ..\image_information\element_judge.c: 'r_line': unreferenced parameter
-  916          
-  917          void draw_target_center(void)
-  918          {
-  919   1          int8 i;
+  914          
+  915          void draw_target_center(void)
+  916          {
+  917   1          int8 i;
+  918   1      
+  919   1          if (!ring_shot_flag)  return;
   920   1      
-  921   1          if (!ring_shot_flag)  return;
-  922   1      
-  923   1          for (i = -5; i <= 5; i++)
-  924   1          {
-C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 16  
+  921   1          for (i = -5; i <= 5; i++)
+  922   1          {
+  923   2              tft180_draw_point(shot_center_x + i, shot_center_y, RGB565_RED);
+  924   2          }
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  20:59:27  PAGE 16  
 
-  925   2              tft180_draw_point(shot_center_x + i, shot_center_y, RGB565_RED);
-  926   2          }
-  927   1      
-  928   1          for (i = -5; i <= 5; i++)
-  929   1          {
-  930   2              tft180_draw_point(shot_center_x, shot_center_y + i, RGB565_RED);
-  931   2          }
-  932   1      }
-  933          
-  934            
+  925   1      
+  926   1          for (i = -5; i <= 5; i++)
+  927   1          {
+  928   2              tft180_draw_point(shot_center_x, shot_center_y + i, RGB565_RED);
+  929   2          }
+  930   1      }
+  931          
+  932            
 
 
 Module Information          Static   Overlayable

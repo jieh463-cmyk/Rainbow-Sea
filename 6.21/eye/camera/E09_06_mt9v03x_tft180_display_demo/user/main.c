@@ -54,7 +54,6 @@ uint8 imu_flag=0;
         int len;
 		 int s=0;
 
-#if 0  // ↓↓↓ 激光相关代码已禁用（全程周期性激光发射方案）
 // ============================================================
 // ★ 全程周期性激光发射方案（注释待启用）
 // 思路：不依赖靶子识别，激光全程按固定间隔自动脉冲
@@ -64,47 +63,46 @@ uint8 imu_flag=0;
 // 车速 ~2m/s 时，靶子区域 40cm 通过时间 ~200ms
 // → 每个靶子经过时至少命中 1~2 次
 // ============================================================
- #define LASER_PERIODIC_INTERVAL  10   // 发射间隔: 10拍 = 100ms
- #define LASER_PERIODIC_DURATION   2   // 脉冲宽度:  2拍 =  20ms
+ //#define LASER_PERIODIC_INTERVAL  10   // 发射间隔: 10拍 = 100ms
+ //#define LASER_PERIODIC_DURATION   2   // 脉冲宽度:  2拍 =  20ms
 
- static uint8 laser_periodic_timer = 0;    // 脉冲定时器 (10ms/拍)
- static uint8 laser_periodic_on    = 0;    // 1=激光正在发射中
+ //static uint8 laser_periodic_timer = 0;    // 脉冲定时器 (10ms/拍)
+ //static uint8 laser_periodic_on    = 0;    // 1=激光正在发射中
 
- void laser_periodic_handler(void)
- {
-     if (laser_periodic_timer > 0)
-     {
-         laser_periodic_timer--;
-     }
+ //void laser_periodic_handler(void)
+ //{
+     //if (laser_periodic_timer > 0)
+     //{
+         //laser_periodic_timer--;
+     //}
 
-     if (laser_periodic_timer == 0)
-     {
-         if (laser_periodic_on)
-         {
+     //if (laser_periodic_timer == 0)
+     //{
+         //if (laser_periodic_on)
+         //{
              // --- 脉冲结束，关闭激光 ---
-             gpio_set_level(IO_P67, 0);
-             gpio_set_level(IO_P76, 0);
-             gpio_set_level(IO_P74, 0);
-             gpio_set_level(IO_P77, 0);
-             gpio_set_level(IO_P75, 0);
-             laser_periodic_on    = 0;
-             laser_periodic_timer = LASER_PERIODIC_INTERVAL;   // 下一轮间隔
-         }
-         else
-         {
+             //gpio_set_level(IO_P67, 0);
+             //gpio_set_level(IO_P76, 0);
+             //gpio_set_level(IO_P74, 0);
+             //gpio_set_level(IO_P77, 0);
+             //gpio_set_level(IO_P75, 0);
+             //laser_periodic_on    = 0;
+             //laser_periodic_timer = LASER_PERIODIC_INTERVAL;   // 下一轮间隔
+         //}
+         //else
+         //{
              // --- 开始新脉冲，打开激光 ---
-             gpio_set_level(IO_P67, 1);
-             gpio_set_level(IO_P76, 1);
+             //gpio_set_level(IO_P67, 1);
+             //gpio_set_level(IO_P76, 1);
              //gpio_set_level(IO_P74, 1);
-             gpio_set_level(IO_P77, 1);
+             //gpio_set_level(IO_P77, 1);
             // gpio_set_level(IO_P75, 1);
-             laser_periodic_on    = 1;
-             laser_periodic_timer = LASER_PERIODIC_DURATION;   // 脉冲保持
-         }
-     }
- }
+             //laser_periodic_on    = 1;
+             //laser_periodic_timer = LASER_PERIODIC_DURATION;   // 脉冲保持
+         //}
+     //}
+ //}
 // ============================================================
-#endif  // ↑↑↑ 激光相关代码已禁用
 
 void buzzer_pit_handler(void)
 {
@@ -190,7 +188,6 @@ void main(void)
 	    {
 
 				int16 left_edge, right_edge;
-			    uint8 last_element;
 				static uint8 stable_element = 0;
 				static uint8 elem_candidate = 0;
 				static uint8 elem_debounce = 0;
@@ -219,6 +216,8 @@ void main(void)
 //			tft180_show_int32(60, 100,  Adaptive_Y_Meet, 1);
 //			tft180_show_int32(90, 100,  Adaptive_X_Meet, 1);
 
+
+
 	 	switch(stable_element){
 			case 2: //  Straightaway
 			{
@@ -229,15 +228,18 @@ void main(void)
 						uint8 far_row   = Adaptive_Y_Meet + 3;
 						int16 far_width  = (int16)R_Border[far_row] - (int16)L_Border[far_row];
 						int16 near_width = (int16)R_Border[50] - (int16)L_Border[50];
-
-						if(far_width < near_width * 3 / 4)
+					
+						// 丢线保护: 远处或近处任一侧边线丢失时(L_Border==3/R_Border==76),
+						// far_width 会被撑到 ~73 虚高, 误判为开阔直道而加速 -> 入弯前冲一下
+						if(L_Border[far_row] == 3 || R_Border[far_row] == 76 ||
+						   L_Border[50]     == 3 || R_Border[50]     == 76)
+						{
 								t = low_speed - 15;
-						else if(far_width < near_width * 7 / 8)
-								t = low_speed;
-						else if(My_ABS(Deviation_Value) >= 15)
-								t = low_speed - 18;
+						}
+						else if(far_width > near_width )
+								t = low_speed - 15;
 						else
-								t = high_speed - 17;
+								t = high_speed;
 				}
 
 				ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line, L_Border, R_Border);
@@ -298,11 +300,10 @@ void main(void)
 			default :
 				t = low_speed - 18;
 				Get_Middle_Line(L_Border , R_Border , C_Line , Image_Y - 3 , 0);
-				Get_Straight_Deviation_Value(last_element, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
+				Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
 				ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line , L_Border , R_Border);
 				speed_control();
 		}
-		last_element = Element;
 
 			tft180_show_gray_image(0, 0,
 				(const uint8 *)Find_Line_Image,

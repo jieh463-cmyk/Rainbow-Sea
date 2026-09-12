@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  variable_limit                                                     12/09/26  19:11:25  PAGE 1   
+C251 COMPILER V5.60.0,  variable_limit                                                     12/09/26  20:59:25  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE variable_limit
@@ -66,7 +66,7 @@ stmt  level    source
    51          * 示例：          My_ABS_F();
    52          * 返回值：        传入参数的绝对值
    53          */
-C251 COMPILER V5.60.0,  variable_limit                                                     12/09/26  19:11:25  PAGE 2   
+C251 COMPILER V5.60.0,  variable_limit                                                     12/09/26  20:59:25  PAGE 2   
 
    54          float My_ABS_F(float value)               //*
    55          {
@@ -134,7 +134,7 @@ stmt  level    source
   116   2              return x;
   117   2          }
   118   1      }
-C251 COMPILER V5.60.0,  variable_limit                                                     12/09/26  19:11:25  PAGE 3   
+C251 COMPILER V5.60.0,  variable_limit                                                     12/09/26  20:59:25  PAGE 3   
 
   119          //16位有符号整形变量限幅
   120          int16 Limit_16(int16 x, int16 a, int16 b)               //*
@@ -203,7 +203,7 @@ Module Information          Static   Overlayable
   bitaddressable size  =    ------     ------
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
-C251 COMPILER V5.60.0,  variable_limit                                                     12/09/26  19:11:25  PAGE 4   
+C251 COMPILER V5.60.0,  variable_limit                                                     12/09/26  20:59:25  PAGE 4   
 
   huge data size       =    ------     ------
   const size           =    ------     ------

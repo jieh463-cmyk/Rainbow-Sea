@@ -857,43 +857,41 @@ void ring_shot_judge(uint8(*image)[Image_X] , uint8 (*l_line)[2], uint8 (*r_line
                 /* -------------------------------------------------------
                  * 6. 执行动作 (仅设置电平，不重复初始化)
                  * ------------------------------------------------------- */
-#if 0  // laser fire block disabled
-                switch (lamp)
-                {
-                case 1:
-                    gpio_init(IO_P76, GPO, 1, GPO_PUSH_PULL);
-										gpio_set_level(IO_P76, 1);
+                //switch (lamp)
+                //{
+                //case 1:
+                    //gpio_init(IO_P76, GPO, 1, GPO_PUSH_PULL);
+										//gpio_set_level(IO_P76, 1);
 //										system_delay_ms(50);
 //										gpio_set_level(IO_P76, 0);
-                    break;
-                case 2:
-                    gpio_init(IO_P74, GPO, 1, GPO_PUSH_PULL);
-										gpio_set_level(IO_P74, 1);
+                    //break;
+                //case 2:
+                    //gpio_init(IO_P74, GPO, 1, GPO_PUSH_PULL);
+										//gpio_set_level(IO_P74, 1);
 //										system_delay_ms(50);
 //										gpio_set_level(IO_P74, 0);
-                    break;
-                case 3:                   
-										gpio_init(IO_P77, GPO, 1, GPO_PUSH_PULL);
-										gpio_set_level(IO_P77, 1);
+                    //break;
+                //case 3:                   
+										//gpio_init(IO_P77, GPO, 1, GPO_PUSH_PULL);
+										//gpio_set_level(IO_P77, 1);
 //										system_delay_ms(50);
 //										gpio_set_level(IO_P77, 0);
-                    break;
-                case 4:
-                    gpio_init(IO_P75, GPO, 1, GPO_PUSH_PULL);
-										gpio_set_level(IO_P75, 1);
+                    //break;
+                //case 4:
+                    //gpio_init(IO_P75, GPO, 1, GPO_PUSH_PULL);
+										//gpio_set_level(IO_P75, 1);
 //										system_delay_ms(50);
 //										gpio_set_level(IO_P75, 0);
-                    break;
-                case 5:
-                    gpio_init(IO_P67, GPO, 1, GPO_PUSH_PULL);
-										gpio_set_level(IO_P67, 1);
+                    //break;
+                //case 5:
+                    //gpio_init(IO_P67, GPO, 1, GPO_PUSH_PULL);
+										//gpio_set_level(IO_P67, 1);
 //										system_delay_ms(50);
 //										gpio_set_level(IO_P67, 0);
-                    break;
-                default:
-                    break;
-                }
-#endif  // laser fire block disabled
+                    //break;
+                //default:
+                    //break;
+                //}
             }
         }
 		//if(photo_flag == 0)

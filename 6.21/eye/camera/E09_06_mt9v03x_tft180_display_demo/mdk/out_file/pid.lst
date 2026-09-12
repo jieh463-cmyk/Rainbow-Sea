@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  pid                                                                12/09/26  19:11:28  PAGE 1   
+C251 COMPILER V5.60.0,  pid                                                                12/09/26  20:59:28  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE pid
@@ -66,7 +66,7 @@ stmt  level    source
    53   1      //  if(Element == Straightaway) {
    54   1      //    p->Kd2 += 20;
    55   1      //  }
-C251 COMPILER V5.60.0,  pid                                                                12/09/26  19:11:28  PAGE 2   
+C251 COMPILER V5.60.0,  pid                                                                12/09/26  20:59:28  PAGE 2   
 
    56   1        
    57   1        p->servo_out = p->Kp1 / 10.0 * p->Error0

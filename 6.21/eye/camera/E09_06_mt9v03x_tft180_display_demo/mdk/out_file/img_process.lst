@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 1   
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  20:59:25  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE img_process
@@ -66,7 +66,7 @@ stmt  level    source
    44   3              }
    45   2              else if(Image_Count_Flag == 0)
    46   2              {
-C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 2   
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  20:59:25  PAGE 2   
 
    47   3                  Image_Count = 0;
    48   3              }
@@ -134,7 +134,7 @@ stmt  level    source
   109          //* 函数功能：      提取阈值中的最大最小值,并求出阈值均值
   110          //* 特殊说明：      计算时间小于5us
   111          //* 形  参：        无
-C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 3   
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  20:59:25  PAGE 3   
 
   112          //*
   113          //* 示例：          Thres_Record_Process（）；
@@ -202,7 +202,7 @@ stmt  level    source
   173          //    }
   174          //    else        //求出左侧阈值均值
   175          //    {
-C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 4   
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  20:59:25  PAGE 4   
 
   176          //        L_Average_Thres = (uint8)(Left_Temp_Value_2 / Left_Temp_Value_1);
   177          //    }
@@ -270,7 +270,7 @@ stmt  level    source
              -Thres_Min * Adaptive_R_Thres_Min)) / 20 + (uint8)(uint8)Black_Box_Value_1 / 10;      
   232          //    //0.45f即0.9 * 0.5，0.9为权重，0.5可自己调节。Black_Box_Value_1为两侧爬线起点的
              -灰度值均值（起点值灰度值为图像中赛道黑线的灰度值，不可为黑框灰度值，可以自己写算
-C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 5   
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  20:59:25  PAGE 5   
 
              -法处理下）
   233          //    //或者Black_Box_Value_1直接丢20 ~ 50之间的值即可
@@ -338,7 +338,7 @@ stmt  level    source
   294   4                      Adaptive_R_Thres_Min = R_Thres_Record[i];
   295   4                  }
   296   3                  if(R_Thres_Record[i] > Adaptive_R_Thres_Max)
-C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 6   
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  20:59:25  PAGE 6   
 
   297   3                  {
   298   4                      Adaptive_R_Thres_Max = R_Thres_Record[i];
@@ -406,7 +406,7 @@ stmt  level    source
   355   2              Compare_Value = 15;   // 保持原始值，避免噪声导致边线提取异常
   356   2          }
   357   1          else if(Adaptive_Thres_Average < 100)
-C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 7   
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  20:59:25  PAGE 7   
 
   358   1          {
   359   2              Compare_Value = 20 - (uint8)(((float)(100 - Adaptive_Thres_Average) / 60.0f) * 10.0f);      //当
@@ -474,7 +474,7 @@ stmt  level    source
   406   3                  uint16 saved_L_bottom = 0;
   407   3                  uint16 saved_R_bottom = 0;
   408   3                  uint16 idx;
-C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 8   
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  20:59:25  PAGE 8   
 
   409   3                  uint16 k;
   410   3      
@@ -542,7 +542,7 @@ stmt  level    source
   472   4                      {
   473   5                          Adaptive_R_Line[Adaptive_R_Statics][0] = temp_R_line[k][0];
   474   5                          Adaptive_R_Line[Adaptive_R_Statics][1] = temp_R_line[k][1];
-C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 9   
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  20:59:25  PAGE 9   
 
   475   5                          Adaptive_R_Grow_Dir[Adaptive_R_Statics]  = temp_R_dir[k];
   476   5                          Adaptive_R_Statics++;
@@ -611,7 +611,7 @@ Module Information          Static   Overlayable
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 10  
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  20:59:25  PAGE 10  
 
   xdata size           =       131     ------
   xdata-const size     =    ------     ------
