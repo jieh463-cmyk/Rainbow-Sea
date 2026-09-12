@@ -1,0 +1,39 @@
+C251 COMPILER V5.60.0,  vision                                                             20/04/26  19:48:11  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE vision
+OBJECT MODULE PLACED IN .\out_file\vision.obj
+COMPILER INVOKED BY: D:\stm\C251\BIN\C251.EXE ..\speed_control\vision.c LARGE FLOAT64 ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE
+                    -(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries
+                    -\zf_driver;..\user;..\code;..\..\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant
+                    -;..\img_process;..\find_line;..\image_information;..\speed_control) DEBUG PRINT(.\out_file\vision.lst) OBJECT(.\out_file
+                    -\vision.obj) 
+
+stmt  level    source
+
+    1          
+*** WARNING C38 IN LINE 1 OF ..\speed_control\vision.c: empty translation unit
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,104 @@
+C251 COMPILER V5.60.0,  pid                                                                12/09/26  19:11:28  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE pid
+OBJECT MODULE PLACED IN .\out_file\pid.obj
+COMPILER INVOKED BY: E:\keilC251\C251\BIN\C251.EXE ..\speed_control\pid.c LARGE FLOAT64 ROM(HUGE) WARNINGLEVEL(3) OPTIMI
+                    -ZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\librari
+                    -es\zf_driver;..\user;..\code;..\..\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assista
+                    -nt;..\img_process;..\find_line;..\image_information;..\speed_control;..\element_process) DEBUG PRINT(.\out_file\pid.lst)
+                    - TABS(2) OBJECT(.\out_file\pid.obj) 
+
+stmt  level    source
+
+    1          #include "file_h_all.h"
+    2          
+    3          int16 ads(int16 a)
+    4          {
+    5   1        if(a<0)a=-a;
+    6   1        return a;
+    7   1      }
+    8          
+    9          
+   10          void PID_Update(PID_t *p)
+   11          {
+   12   1        /*获取本次误差和上次误差*/
+   13   1        p->Error2 = p->Error1;
+   14   1        p->Error1 = p->Error0;          //获取上次误差
+   15   1        p->Error0 = p->Target - p->Actual;    //获取本次误差，目标值减实际值，即为误差值
+   16   1      
+   17   1      
+   18   1      
+   19   1        /*PID计算*/
+   20   1        p->Out += p->Kp * (p->Error0-p->Error1)
+   21   1             + (p->Ki/10.0) * p->Error0
+   22   1             + p->Kd * (p->Error0 - 2*p->Error1+p->Error2);
+   23   1      
+   24   1      
+   25   1      
+   26   1      
+   27   1        /*输出限幅*/
+   28   1        if (p->Out > p->OutMax) {p->Out = p->OutMax;}
+   29   1        if (p->Out < p->OutMin) {p->Out = p->OutMin;}
+   30   1      }
+   31          
+   32          
+   33          void servo_update(PPD_t *p)
+   34          {
+   35   1        static int16 error_i = 0;
+   36   1      
+   37   1        p->Error1 = p->Error0;
+   38   1        p->Error0 = -Deviation_Value;
+   39   1      
+   40   1        /* 小积分项：仅直道(偏差<10)慢慢累积消除稳态偏置，弯道清零 */
+   41   1        if (ads(Deviation_Value) < 10) {
+   42   2          error_i += p->Error0;
+   43   2          if (error_i >  200) error_i =  200;
+   44   2          if (error_i < -200) error_i = -200;
+   45   2        } else {
+   46   2          error_i = 0;
+   47   2        }
+   48   1        
+   49   1        if(L_Circle_State == 3 || L_Circle_State == 4) {
+   50   2          p->Kd2 = -65;    //-70
+   51   2        }
+   52   1        
+   53   1      //  if(Element == Straightaway) {
+   54   1      //    p->Kd2 += 20;
+   55   1      //  }
+C251 COMPILER V5.60.0,  pid                                                                12/09/26  19:11:28  PAGE 2   
+
+   56   1        
+   57   1        p->servo_out = p->Kp1 / 10.0 * p->Error0
+   58   1                     + p->Kp2 / 100.0 * p->Error0 * ads(p->Error0)
+   59   1                     + (p->Kd1 * (p->Error0 - p->Error1)) / 10.0
+   60   1                     + p->Kd2 * (imu660ra_gyro_z / 1000.0)
+   61   1                     + error_i / 100;
+   62   1      
+   63   1        if (p->servo_out > p->servoMax) { p->servo_out = p->servoMax; }
+   64   1        if (p->servo_out < p->servoMin) { p->servo_out = p->servoMin; }
+   65   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      1369     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        12     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =         7     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

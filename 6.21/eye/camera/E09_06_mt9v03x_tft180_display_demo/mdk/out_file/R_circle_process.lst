@@ -1,0 +1,347 @@
+C251 COMPILER V5.60.0,  R_circle_process                                                   12/09/26  19:11:29  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE R_circle_process
+OBJECT MODULE PLACED IN .\out_file\R_circle_process.obj
+COMPILER INVOKED BY: E:\keilC251\C251\BIN\C251.EXE ..\element_process\R_circle_process.c LARGE FLOAT64 ROM(HUGE) WARNING
+                    -LEVEL(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devic
+                    -e;..\..\libraries\zf_driver;..\user;..\code;..\..\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\s
+                    -eekfree_assistant;..\img_process;..\find_line;..\image_information;..\speed_control;..\element_process) DEBUG PRINT(.\ou
+                    -t_file\R_circle_process.lst) TABS(2) OBJECT(.\out_file\R_circle_process.obj) 
+
+stmt  level    source
+
+    1          #include "file_h_all.h"
+    2          uint8 R_Circle_State = 0;
+    3          void R_Circle_Process(void)
+    4          {
+    5   1        uint8 i = 0;
+    6   1          
+    7   1          uint8 State_1_Flag = 0;
+    8   1          uint8 State_2_Flag = 0;
+    9   1          uint8 Break_Flag = 0;
+   10   1        buzzer_beep();
+*** WARNING C140 IN LINE 10 OF ..\element_process\R_circle_process.c: 'buzzer_beep' undefined; assuming 'extern int buzz
+             -er_beep()'
+   11   1        
+   12   1          Z_Yaw = 0;
+   13   1          Image_Count = 0;
+   14   1      
+   15   1          Image_Count_Flag = 1;
+   16   1          R_Circle_State = 1;
+   17   1        while(1)
+   18   1        {
+   19   2          Element_State = R_Circle;
+   20   2          switch(R_Circle_State)
+   21   2          {
+   22   3            case 1:
+   23   3            {
+   24   4              uint8 Temp_Num = 0;
+   25   4                      Process_Image();
+   26   4              
+   27   4                      Get_R_Left_Turn_Up_Point_1(2);
+   28   4                      Get_R_Arc_Turn_Point();
+   29   4              
+   30   4      
+   31   4                      Get_Middle_Line(L_Border, R_Border, C_Line, Image_Y - 3, L_Unilateral_Patrol);
+   32   4              //Get_Straight_Deviation_Value(Element_State, Adaptive_Y_Meet , Image_Y - 3 , C_Line ,R_Circle_State)
+             -;
+   33   4              Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
+   34   4              
+   35   4              speed_control();
+   36   4      
+   37   4              switch(State_1_Flag)
+   38   4                      {
+   39   5                          case 0:
+   40   5                          {
+   41   6                              for(i = 57; i > 40; i--)
+   42   6                              {
+   43   7                                  if(R_Border[i] == 76)
+   44   7                                  {
+   45   8                                      Temp_Num ++;
+   46   8                                  }
+   47   7                              }
+   48   6                              if(Temp_Num >= 14  )
+   49   6                              {
+   50   7                                  State_1_Flag = 1;
+   51   7                              }
+   52   6                              break;
+C251 COMPILER V5.60.0,  R_circle_process                                                   12/09/26  19:11:29  PAGE 2   
+
+   53   6                          }
+   54   5                          case 1:
+   55   5                          {
+   56   6      
+   57   6                              for( i = 57 ; i > 37 ; i-- )
+   58   6                              {
+   59   7                                  if(R_Border[i] != 76)
+   60   7                                  {
+   61   8                                      Temp_Num ++;
+   62   8                                  }
+   63   7                              }
+   64   6                  
+   65   6                              if( R_Arc_Turn_Point_Flag == 1 )
+   66   6                              {
+   67   7                                  if(Temp_Num >=8 && R_Left_Turn_Up_Point_Flag_1 == 1 /*&& R_Left_Turn_Up_Point
+             -_1[1] >= 8 && R_Arc_Turn_Point[0][1] >= 30 */)
+   68   7                                  {
+   69   8      
+   70   8      
+   71   8                                     buzzer_beep();
+   72   8                                      R_Circle_State = 2;
+   73   8      //                                Circle_Temp_Num_2 = 0;
+   74   8                                      Image_Count = 0;
+   75   8                                  }
+   76   7                              }
+   77   6                              else
+   78   6                              {
+   79   7                                  if(Temp_Num >= 8 && R_Left_Turn_Up_Point_Flag_1 == 1 && R_Left_Turn_Up_Point_
+             -1[1] >= 8)
+   80   7                                  {
+   81   8      
+   82   8                      buzzer_beep();
+   83   8                                      R_Circle_State = 2;
+   84   8      //                                Circle_Temp_Num_2 = 0;
+   85   8                                      Image_Count = 0;
+   86   8                                  }
+   87   7                              }
+   88   6                              if(R_Left_Turn_Up_Point_Flag_1 == 1)
+   89   6                              {
+   90   7                                  Temp_Num = 0;
+   91   7                                  for(i = R_Left_Turn_Up_Point_1[1]; i < Adaptive_R_Start_Point[1]; i++)
+   92   7                                  {
+   93   8                                      if(R_Border[i] == 76)
+   94   8                                      {
+   95   9                                          Temp_Num ++;
+   96   9                                      }
+   97   8                                  }
+   98   7                                  if(R_Left_Turn_Up_Point_1[1] >= 15 && (((float)Temp_Num / (float)(Adaptive_R_
+             -Start_Point[0] - R_Left_Turn_Up_Point_1[1])) >= 0.85f))
+   99   7                                  {
+  100   8      
+  101   8                                    buzzer_beep();
+  102   8                                      R_Circle_State = 2;
+  103   8      //                                Circle_Temp_Num_2 = 0;
+  104   8                                      Image_Count = 0;
+  105   8                                  }
+  106   7                              }
+  107   6                              break;
+  108   6                          }
+  109   5                      }
+  110   4              break;
+  111   4            }
+  112   3            case 2:
+  113   3            {
+  114   4              uint8 Num = 0;
+  115   4              
+C251 COMPILER V5.60.0,  R_circle_process                                                   12/09/26  19:11:29  PAGE 3   
+
+  116   4                      IMU_JF_Flag = 1;
+  117   4              Process_Image();
+  118   4      
+  119   4              Get_Middle_Line(L_Border, R_Border, C_Line, Image_Y - 3, R_Arc_Unilateral_Patrol_2);
+  120   4      
+  121   4              Get_Straight_Deviation_Value(Element_State , Adaptive_Y_Meet  , Image_Y - 3 , C_Line , R_Circle_State
+             -);
+  122   4              //Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
+  123   4              
+  124   4              speed_control();
+  125   4      
+  126   4                      for(i = 57; i > 0; i--)
+  127   4                      {
+  128   5                          if(Adaptive_L_Line[i][0] == X_Border_Min + 3)
+  129   5                          {
+  130   6                              Num ++;
+  131   6                          }
+  132   5                      }
+  133   4              
+  134   4                      if(Num >= 35)
+  135   4                      {
+  136   5                          State_2_Flag = 1;
+  137   5                      }
+  138   4              
+  139   4                      if(State_2_Flag == 1)
+  140   4                      {
+  141   5                          if(Num <= 12)
+  142   5                          {
+  143   6                  buzzer_beep();
+  144   6                              R_Circle_State = 3;
+  145   6                              Image_Count = 0;
+  146   6                  
+  147   6                          }
+  148   5                      }
+  149   4                      if(Image_Count >= 75)
+  150   4                      {
+  151   5                buzzer_beep();
+  152   5                          R_Circle_State = 3;
+  153   5                          Image_Count = 0;
+  154   5                      }
+  155   4                      break;
+  156   4            }
+  157   3            case 3:
+  158   3            {
+  159   4              Process_Image();
+  160   4      
+  161   4                      Get_L_Up_Turn_Left_Point_1(2);
+  162   4      
+  163   4                      //Get_Middle_Line(L_Border, R_Border, C_Line, Image_Y - 3, R_Arc_Unilateral_Patrol_4);
+  164   4                      Get_Middle_Line(L_Border, R_Border, C_Line, Image_Y - 4, R_Arc_Unilateral_Patrol_4);
+  165   4      
+  166   4                     Get_Straight_Deviation_Value(0, Adaptive_Y_Meet , Image_Y - 3 , C_Line ,0);
+  167   4              //Get_Straight_Deviation_Value(Element_State, Adaptive_Y_Meet , Image_Y - 3 , C_Line ,R_Circle_State)
+             -;
+  168   4              
+  169   4              speed_control();
+  170   4      
+  171   4                      if(L_Up_Turn_Left_Point_Flag_1 == 1 && Adaptive_Y_Meet >= 15)
+  172   4                      {
+  173   5      
+  174   5                         buzzer_beep();
+  175   5                          R_Circle_State = 4;
+  176   5      
+  177   5                          Image_Count = 0;
+  178   5                      }
+  179   4              if(My_ABS(Z_Yaw) >= 340)
+C251 COMPILER V5.60.0,  R_circle_process                                                   12/09/26  19:11:29  PAGE 4   
+
+  180   4                     {
+  181   5                         buzzer_beep();
+  182   5                         R_Circle_State = 5;
+  183   5                         Image_Count = 0;
+  184   5                     }
+  185   4                      break;
+  186   4            }
+  187   3            case 4:
+  188   3                  {
+  189   4                      Process_Image();
+  190   4      
+  191   4                      Get_R_Left_Turn_Up_Point_1(3);
+  192   4                      Get_L_Intercept_And_Slope( Adaptive_L_Line[ Adaptive_L_Statics ] + 1, Image_Y - 10);
+*** WARNING C161 IN LINE 192 OF ..\element_process\R_circle_process.c: 'xdata' pointer truncated to 'unsigned char'
+*** WARNING C10 IN LINE 192 OF ..\element_process\R_circle_process.c: conversion: 'pointer' to 'unsigned char'
+  193   4      
+  194   4                      Get_Middle_Line(L_Border, R_Border, C_Line, Image_Y - 3, R_Arc_Unilateral_Patrol_4);
+  195   4      
+  196   4                      Get_Straight_Deviation_Value(0, Adaptive_Y_Meet , Image_Y - 3 , C_Line , 0);
+  197   4              //Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
+  198   4              
+  199   4              speed_control();
+  200   4      
+  201   4                      if(L_Straight_Flag == 1 && R_Left_Turn_Up_Point_Flag_1 == 1 && Adaptive_Y_Meet <= 15)
+  202   4                      {
+  203   5                          buzzer_beep();
+  204   5                          R_Circle_State = 5;
+  205   5                          Image_Count = 0;
+  206   5                      }
+  207   4                      if(Image_Count >= 200)
+  208   4                      {
+  209   5                         buzzer_beep();
+  210   5                          R_Circle_State = 5;
+  211   5                          Image_Count = 0;
+  212   5                      }
+  213   4                     if(My_ABS(Z_Yaw) >= 340)
+  214   4                     {
+  215   5                        buzzer_beep();
+  216   5                         R_Circle_State = 5;
+  217   5                         Image_Count = 0;
+  218   5                     }
+  219   4                     break;
+  220   4                  }
+  221   3            case 5:
+  222   3                  { 
+  223   4              uint8 Num = 0;
+  224   4                      
+  225   4              IMU_JF_Flag = 0;
+  226   4                      Z_Yaw = 0 ; 
+  227   4              
+  228   4                      Process_Image();
+  229   4      
+  230   4                      Get_Middle_Line(L_Border, R_Border, C_Line, Image_Y - 3, L_Unilateral_Patrol);
+  231   4      
+  232   4              //Get_Straight_Deviation_Value(Element_State, Adaptive_Y_Meet , Image_Y - 3 , C_Line ,R_Circle_State)
+             -;
+  233   4              Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
+  234   4              
+  235   4              speed_control();
+  236   4      
+  237   4                      for(i = 57; i > 34; i--)
+  238   4                      {
+  239   5                          if(R_Border[i] == 76)
+  240   5                          {
+  241   6                              Num ++ ;
+  242   6                          }
+C251 COMPILER V5.60.0,  R_circle_process                                                   12/09/26  19:11:29  PAGE 5   
+
+  243   5                      }
+  244   4                      if(Num <= 4)
+  245   4                      {
+  246   5                          buzzer_beep();
+  247   5                          Break_Flag = 1;
+  248   5                          Image_Count = 0;
+  249   5                      }
+  250   4                      if( Image_Count >= 250 )
+  251   4                      {
+  252   5                         buzzer_beep();
+  253   5                          Break_Flag = 1;
+  254   5                          Image_Count = 0;
+  255   5                      }
+  256   4                  }
+  257   3      
+  258   3          }
+  259   2          if(Break_Flag == 1)
+  260   2              {
+  261   3                  Image_Count_Flag = 0;
+  262   3                  Image_Count = 0;
+  263   3                  Circle_Temp_Num = 0;
+  264   3      //            R_Circle_Count ++ ;
+  265   3            Element = 0;
+  266   3       //           Zebra_Flag = 1;
+  267   3                  break;
+  268   3              }
+  269   2          
+  270   2      //    photo_send();
+  271   2      //    
+  272   2      //        tft180_show_gray_image(0, 0,
+  273   2      //        (const uint8 *)Find_Line_Image,
+  274   2      //               Image_X,      // ͼ��ʵ�ʿ���:80
+  275   2      //               Image_Y,      // ͼ��ʵ�ʸ߶�:60
+  276   2      //                80,      // ͼ����ʾ����
+  277   2      //                60,      // ͼ����ʾ����
+  278   2      //                0);           //0:�����ֵ��
+  279   2      //////      tft180_show_float(0,48, servo_pid.Error0 ,2,2);
+  280   2      //////      tft180_show_float(0,64, servo_pid.servo_out ,2,2);
+  281   2      
+  282   2      //////      tft180_show_string(0,80, "Z_Yaw:");
+  283   2      //////      tft180_show_int16(64, 80, Z_Yaw);
+  284   2      
+  285   2      //    Draw_Border_Points_1(Adaptive_L_Line, Adaptive_R_Line, C_Line , Adaptive_L_Statics, Adaptive_R_Static
+             -s);
+  286   2        }
+  287   1      
+  288   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      1581     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =         6     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =         6     ------
+C251 COMPILER V5.60.0,  R_circle_process                                                   12/09/26  19:11:29  PAGE 6   
+
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  3 WARNING(S),  0 ERROR(S)

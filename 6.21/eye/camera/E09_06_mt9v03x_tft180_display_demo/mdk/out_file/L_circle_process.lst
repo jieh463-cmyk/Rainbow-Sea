@@ -1,0 +1,366 @@
+C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  19:11:28  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE L_circle_process
+OBJECT MODULE PLACED IN .\out_file\L_circle_process.obj
+COMPILER INVOKED BY: E:\keilC251\C251\BIN\C251.EXE ..\element_process\L_circle_process.c LARGE FLOAT64 ROM(HUGE) WARNING
+                    -LEVEL(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_devic
+                    -e;..\..\libraries\zf_driver;..\user;..\code;..\..\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\s
+                    -eekfree_assistant;..\img_process;..\find_line;..\image_information;..\speed_control;..\element_process) DEBUG PRINT(.\ou
+                    -t_file\L_circle_process.lst) TABS(2) OBJECT(.\out_file\L_circle_process.obj) 
+
+stmt  level    source
+
+    1          #include "file_h_all.h"
+    2          
+    3          
+    4          uint8 err = 0;
+    5          float Circle_Temp_Dif = 0;
+    6          uint8 Circle_Temp_Num = 0;
+    7          uint8 L_Circle_State = 0;
+    8          void L_Circle_Process(void)
+    9          {
+   10   1        uint8 i = 0;
+   11   1          
+   12   1          uint8 State_1_Flag = 0;
+   13   1          uint8 State_2_Flag = 0;
+   14   1          uint8 Break_Flag = 0;
+   15   1        buzzer_beep();
+*** WARNING C140 IN LINE 15 OF ..\element_process\L_circle_process.c: 'buzzer_beep' undefined; assuming 'extern int buzz
+             -er_beep()'
+   16   1      
+   17   1          Image_Count = 0;
+   18   1      
+   19   1          Image_Count_Flag = 1;
+   20   1        L_Circle_State = 1;
+   21   1        
+   22   1        while(1)
+   23   1        {
+   24   2          Element_State = L_Circle;
+   25   2          switch(L_Circle_State)
+   26   2          {
+   27   3            case 1: 
+   28   3            {
+   29   4              uint8 Temp_Num = 0;
+   30   4                      Process_Image();
+   31   4      
+   32   4                      Get_L_Right_Turn_Up_Point_1(2);
+   33   4                      Get_L_Arc_Turn_Point();     
+   34   4      
+   35   4                      Get_Middle_Line(L_Border, R_Border, C_Line, Image_Y - 3, R_Unilateral_Patrol);
+   36   4              //Get_Straight_Deviation_Value(Element_State, Adaptive_Y_Meet , Image_Y - 3 , C_Line , L_Circle_State
+             -);
+   37   4              Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
+   38   4      
+   39   4              speed_control();
+   40   4              //tft180_show_int16(0, 100, err + 1);
+   41   4              switch(State_1_Flag)
+   42   4                      {
+   43   5                          case 0:
+   44   5                          {
+   45   6                    
+   46   6                              for(i = 57; i > 40; i--)
+   47   6                              {
+   48   7                                  if(L_Border[i] == 3)
+   49   7                                  {
+   50   8                                      Temp_Num ++;
+   51   8                                  }
+   52   7                              }
+C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  19:11:28  PAGE 2   
+
+   53   6                  
+   54   6                              if(Temp_Num >= 14 )
+   55   6                              {
+   56   7                                  State_1_Flag = 1;
+   57   7                              }
+   58   6                              break;
+   59   6                          }
+   60   5                          case 1:
+   61   5                          {
+   62   6                              for( i = 57 ; i > 37 ; i-- )
+   63   6                              {
+   64   7                                  if(L_Border[i] != 3)
+   65   7                                  {
+   66   8                                      Temp_Num ++;
+   67   8                                  }
+   68   7                              }
+   69   6                              if( L_Arc_Turn_Point_Flag == 1 )
+   70   6                              {
+   71   7                                  if(Temp_Num >= 8 && L_Right_Turn_Up_Point_Flag_1 == 1 /*&& L_Right_Turn_Up_Po
+             -int_1[1] >= 8 && L_Arc_Turn_Point[0][1] >= 30 && R_Straight_Flag*/)
+   72   7                                  {
+   73   8      
+   74   8                                     buzzer_beep();
+   75   8                                      L_Circle_State = 2;
+   76   8      //                                Circle_Temp_Num_2 = 0;
+   77   8                                      Image_Count = 0;
+   78   8                                  }
+   79   7                              }
+   80   6                else
+   81   6                {
+   82   7                  if(Temp_Num >= 8 && L_Right_Turn_Up_Point_Flag_1 == 1 && L_Right_Turn_Up_Point_1[1] >= 8)
+   83   7                  {
+   84   8                    
+   85   8                   buzzer_beep();
+   86   8                    L_Circle_State = 2;
+   87   8      //                                Circle_Temp_Num_2 = 0;
+   88   8                    Image_Count = 0;
+   89   8                  }
+   90   7                }
+   91   6                              if(L_Right_Turn_Up_Point_Flag_1 == 1)
+   92   6                              {
+   93   7                                  Temp_Num = 0;
+   94   7                                  for(i = L_Right_Turn_Up_Point_1[1]; i < Adaptive_L_Start_Point[1]; i++)
+   95   7                                  {
+   96   8                                      if(L_Border[i] == 3)
+   97   8                                      {
+   98   9                                          Temp_Num ++;
+   99   9                                      }
+  100   8                                  }
+  101   7                                  if(L_Right_Turn_Up_Point_1[1] >= 15 && (((float)Temp_Num / (float)(Adaptive_L
+             -_Start_Point[0] - L_Right_Turn_Up_Point_1[1])) >= 0.85f))
+  102   7                                  {
+  103   8                      
+  104   8                                    buzzer_beep();
+  105   8                                      L_Circle_State = 2;
+  106   8      //                                Circle_Temp_Num_2 = 0;
+  107   8                                      Image_Count = 0;
+  108   8                                  }
+  109   7                              }
+  110   6                              break;
+  111   6                          }
+  112   5                      }
+  113   4              break;
+  114   4            }
+  115   3            case 2:
+  116   3            {
+C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  19:11:28  PAGE 3   
+
+  117   4              uint8 Num = 0;
+  118   4              
+  119   4              IMU_JF_Flag = 1;
+  120   4              Process_Image();
+  121   4              
+  122   4              Get_Middle_Line(L_Border, R_Border, C_Line, Image_Y - 3, L_Arc_Unilateral_Patrol_2);    
+  123   4              
+  124   4              Get_Straight_Deviation_Value(Element_State , Adaptive_Y_Meet  , Image_Y - 3 , C_Line , L_Circle_State
+             -);
+  125   4              Deviation_Value += 5;
+  126   4              speed_control();
+  127   4              //tft180_show_int16(0, 100, err + 2);
+  128   4                      for(i = 57; i > 0; i--)
+  129   4                      {
+  130   5                          if(Adaptive_R_Line[i][0] == X_Border_Max - 3)
+  131   5                          {
+  132   6                              Num ++;
+  133   6                          }
+  134   5                      }
+  135   4                      //tft180_show_int16(60, 120, Num);
+  136   4                      if(Num >= 20)
+  137   4                      {
+  138   5                          State_2_Flag = 1;
+  139   5                          break;
+  140   5                      }
+  141   4                      if(State_2_Flag == 1)
+  142   4                      {
+  143   5                          if(Num <= 16)
+  144   5                          {
+  145   6                buzzer_beep();
+  146   6                              L_Circle_State = 3;
+  147   6                              Image_Count = 0;
+  148   6                              break;
+  149   6                          }
+  150   5                      }
+  151   4      //                if(Image_Count >= 75)
+  152   4      //                {
+  153   4      //          buzzer_beep();
+  154   4      //                    L_Circle_State = 3;
+  155   4      //                    Image_Count = 0;
+  156   4      //                }
+  157   4                      break;
+  158   4            }
+  159   3            case 3:
+  160   3            {
+  161   4              Process_Image();
+  162   4      
+  163   4                      Get_R_Up_Turn_Right_Point_1(2);
+  164   4      
+  165   4                     // Get_Middle_Line(L_Border, R_Border, C_Line, Image_Y - 4, L_Arc_Unilateral_Patrol_2);
+  166   4                      Get_Middle_Line(L_Border, R_Border, C_Line, Image_Y - 4, L_Arc_Unilateral_Patrol_4);
+  167   4                      
+  168   4                      Get_Straight_Deviation_Value(0, Adaptive_Y_Meet , Image_Y - 3 , C_Line ,0);
+  169   4                      //Get_Straight_Deviation_Value(Element_State, Adaptive_Y_Meet , Image_Y - 3 , C_Line , L_
+             -Circle_State);
+  170   4      
+  171   4              speed_control();
+  172   4              //tft180_show_int16(0, 100, err + 3);
+  173   4      //        tft180_show_int16(0, 120, R_Up_Turn_Right_Point_Flag_1);    
+  174   4      //        tft180_show_int16(60, 120, Adaptive_Y_Meet);    
+  175   4                      if(R_Up_Turn_Right_Point_Flag_1 == 1 && Adaptive_Y_Meet >= 15)
+  176   4                      {
+  177   5      
+  178   5                
+  179   5                         buzzer_beep();
+  180   5                          L_Circle_State = 4;
+C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  19:11:28  PAGE 4   
+
+  181   5      
+  182   5                          Image_Count = 0;
+  183   5                      }
+  184   4              if(My_ABS_F(Z_Yaw) >= 300)
+  185   4                      {
+  186   5                          buzzer_beep();
+  187   5                          L_Circle_State = 5;
+  188   5                          Image_Count = 0;
+  189   5                      }
+  190   4                      break;
+  191   4            }
+  192   3            case 4:
+  193   3                  {
+  194   4                      Process_Image();
+  195   4      
+  196   4                      Get_L_Right_Turn_Up_Point_1(3);
+  197   4                      Get_R_Intercept_And_Slope( Adaptive_R_Line[ Adaptive_R_Statics ] + 1, Image_Y - 10);
+*** WARNING C161 IN LINE 197 OF ..\element_process\L_circle_process.c: 'xdata' pointer truncated to 'unsigned char'
+*** WARNING C10 IN LINE 197 OF ..\element_process\L_circle_process.c: conversion: 'pointer' to 'unsigned char'
+  198   4      
+  199   4                      Get_Middle_Line(L_Border, R_Border, C_Line, Image_Y - 3, L_Arc_Unilateral_Patrol_4);
+  200   4      
+  201   4                      Get_Straight_Deviation_Value(0, Adaptive_Y_Meet , Image_Y - 3 , C_Line , 0);
+  202   4      
+  203   4              speed_control();
+  204   4              //tft180_show_int16(0, 100, err + 4);
+  205   4      //        tft180_show_int16(60, 100, R_Straight_Flag);
+  206   4      //        tft180_show_int16(0, 120, L_Right_Turn_Up_Point_Flag_1);
+  207   4      //        tft180_show_int16(60, 120, Adaptive_Y_Meet);      //30~40
+  208   4                      if(R_Straight_Flag == 1 && L_Right_Turn_Up_Point_Flag_1 == 1 && Adaptive_Y_Meet <= 15)
+  209   4                      {
+  210   5                          buzzer_beep();
+  211   5                          L_Circle_State = 5;
+  212   5                          Image_Count = 0;
+  213   5                      }
+  214   4      //                if(Image_Count >= 200)
+  215   4      //                {
+  216   4      //                   buzzer_beep();
+  217   4      //                    L_Circle_State = 5;
+  218   4      //                    Image_Count = 0;
+  219   4      //                }
+  220   4                      if(My_ABS_F(Z_Yaw) >= 300)
+  221   4                      {
+  222   5                         buzzer_beep();
+  223   5                          L_Circle_State = 5;
+  224   5                          Image_Count = 0;
+  225   5                      }
+  226   4                      break;
+  227   4                  }
+  228   3            case 5:
+  229   3                  { 
+  230   4              uint8 Num = 0;
+  231   4                      
+  232   4              IMU_JF_Flag = 0;
+  233   4              Z_Yaw = 0 ; 
+  234   4              
+  235   4                      
+  236   4                      Process_Image();
+  237   4      
+  238   4                      Get_Middle_Line(L_Border, R_Border, C_Line, Image_Y - 3, R_Unilateral_Patrol);
+  239   4                      
+  240   4              //Get_Straight_Deviation_Value(Element_State, Adaptive_Y_Meet , Image_Y - 3 , C_Line , L_Circle_State
+             -);
+  241   4              Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
+  242   4      
+  243   4              speed_control();
+C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  19:11:28  PAGE 5   
+
+  244   4              //tft180_show_int16(0, 100, err + 5);
+  245   4              
+  246   4                      for(i = 57; i > 34; i--)
+  247   4                      {
+  248   5                          if(L_Border[i] == 3)
+  249   5                          {
+  250   6                              Num ++;
+  251   6                          }
+  252   5                      }
+  253   4                      
+  254   4                      if(Num <= 4)
+  255   4                      {
+  256   5                          buzzer_beep();
+  257   5                          Break_Flag = 1;
+  258   5                          Image_Count = 0;
+  259   5                      }
+  260   4      //                {
+  261   4      //                    uint8 near_width = R_Border[55] - L_Border[55];
+  262   4      //                    if(near_width >= 60)   
+  263   4      //                    {
+  264   4      //                        Break_Flag = 1;
+  265   4      //                    }
+  266   4      //                }
+  267   4      //                if(Image_Count >= 250)
+  268   4      //                {
+  269   4      //                   buzzer_beep();
+  270   4      //                    Break_Flag = 1;
+  271   4      //                    Image_Count = 0;
+  272   4      //                }
+  273   4                      //tft180_show_int16(0, 140, R_Border[55] - L_Border[55]);
+  274   4                  }
+  275   3          
+  276   3          }
+  277   2          if(Break_Flag == 1)
+  278   2              {
+  279   3                  Image_Count_Flag = 0;
+  280   3                  Image_Count = 0;
+  281   3                  Circle_Temp_Num = 0;
+  282   3      //            L_Circle_Count ++ ;
+  283   3      
+  284   3            
+  285   3            Element = 0;
+  286   3       //           Zebra_Flag = 1;
+  287   3                  break;
+  288   3              }
+  289   2          
+  290   2      ////    photo_send();
+  291   2      //    
+  292   2      //        tft180_show_gray_image(0, 0, 
+  293   2      //        (const uint8 *)Find_Line_Image, 
+  294   2      //               Image_X,      // ͼ��ʵ�ʿ���:80
+  295   2      //               Image_Y,      // ͼ��ʵ�ʸ߶�:60  
+  296   2      //                80,      // ͼ����ʾ����
+  297   2      //                60,      // ͼ����ʾ����
+  298   2      //                0);           //0:�����ֵ��
+  299   2      //      tft180_show_float(0,100, servo_pid.Error0 ,2,2);
+  300   2      //      tft180_show_float(60,100, servo_pid.servo_out ,2,2);  
+  301   2      ////      
+  302   2      //      tft180_show_string(0,80, "Z_Yaw:");
+  303   2      //      tft180_show_int16(64, 80, Z_Yaw);
+  304   2      //////        
+  305   2      //     Draw_Border_Points_1(Adaptive_L_Line, Adaptive_R_Line, C_Line, Adaptive_L_Statics, Adaptive_R_Static
+             -s);
+  306   2        }
+  307   1        
+  308   1      }
+C251 COMPILER V5.60.0,  L_circle_process                                                   12/09/26  19:11:28  PAGE 6   
+
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      1489     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        12     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        27     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  3 WARNING(S),  0 ERROR(S)

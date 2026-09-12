@@ -1,0 +1,630 @@
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE img_process
+OBJECT MODULE PLACED IN .\out_file\img_process.obj
+COMPILER INVOKED BY: E:\keilC251\C251\BIN\C251.EXE ..\img_process\img_process.c LARGE FLOAT64 ROM(HUGE) WARNINGLEVEL(3) 
+                    -OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\l
+                    -ibraries\zf_driver;..\user;..\code;..\..\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_a
+                    -ssistant;..\img_process;..\find_line;..\image_information;..\speed_control;..\element_process) DEBUG PRINT(.\out_file\im
+                    -g_process.lst) TABS(2) OBJECT(.\out_file\img_process.obj) 
+
+stmt  level    source
+
+    1          #include "file_h_all.h"
+    2          
+    3          //**********************图像压缩********************************
+    4          /**
+    5          * 函数功能：      复制并压缩图像，将 188 * 120 图像压缩为 80 * 60 大小
+    6          * 特殊说明：      总钻风使用手册中说明：图像分辨率为  752 * 480， 376 * 240， 188
+             - * 120 这三种分辨率视野是一样的，三者呈整数倍关系
+    7          *                其他分辨率是通过裁减得到的(这个裁减包含比188 * 120小的任何分辨
+             -率，如 94 * 60)，如376 * 240 的视野反而比752 * 400 的视野广
+    8          *                此处将总钻风传回图像 188 * 120 压缩为 80 * 60， 所以将 j 乘系数 2.35
+             -（188 / 80）
+    9          *                经实际测试，当设置图像大小为 94 * 60 时，传回的图像视野是 188 * 
+             -120 的四分之一，虽然也和 752 * 480 呈整数倍关系，但和上述情况不同
+   10          *
+   11          *                注意复制是必须的，这样在处理复制图像时，原图像变量就可以正�
+             -��接收摄像头数据
+   12          * 形  参：        无
+   13          * 示例：          Copy_Zip_Image();
+   14          * 返回值：        无
+   15          */
+   16          
+   17          // 定义全局变量，与头文件的extern声明对应
+   18          uint8 Inverse_Flag = 0;
+   19          uint8 far Find_Line_Image[Image_Y][Image_X];
+   20          uint8 Image_Num = 0;
+   21          
+   22          void Copy_Zip_Image(void)               //*****
+   23          {
+   24   1          uint8 i,j;
+   25   1      
+   26   1        if(Image_Count_Flag == 1)
+   27   1              {
+   28   2                  Image_Count ++;
+   29   2              }
+   30   1        
+   31   1          if(mt9v03x_finish_flag == 1 && Inverse_Flag == 0)       //mt9v03x_finish_flag：逐飞库定义摄像
+             -头采集标志位，采集完一帧图像会挂1
+   32   1          //Inverse_Flag == 1                                     //Inverse_Flag：自定义逆透视标志位�
+             -��挂1时会得到一张逆透视图像，根据自己需求而定
+   33   1          {
+   34   2              for(i = 0; i < Image_Y; i++)
+   35   2              {
+   36   3                  for(j = 0; j < Image_X; j++)
+   37   3                  {
+   38   4                      Find_Line_Image[i][j] = mt9v03x_image[i * 2][(uint8)(j * 235 / 100 )];    //将188 * 120�
+             -��像压缩为 80 * 60大小，X轴比为2.35，Y轴比为2
+   39   4                  }
+   40   3              }
+   41   2              if(Image_Count_Flag == 1)                 //Image_Count_Flag：自定义开启图像计数标志�
+             -��，挂1时开启图像计数，即每采集一张图像计数+1；挂0时图像计数清零
+   42   2              {
+   43   3                  Image_Count ++;
+   44   3              }
+   45   2              else if(Image_Count_Flag == 0)
+   46   2              {
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 2   
+
+   47   3                  Image_Count = 0;
+   48   3              }
+   49   2              Image_Num ++;
+   50   2              mt9v03x_finish_flag = 0;    //注意清掉图像采集完成标志位
+   51   2      //                                      (Copy_Zip_Image 内部已经清零了 mt9v03x_finish_flag，如果图像处理时间
+             -过长，可能会错过新一帧的数据，导致显示撕裂。)
+   52   2          }
+   53   1      
+   54   1      }
+   55          //****************************************************************
+   56          
+   57          //**********************图像补黑框********************************
+   58          uint8 Black_Box_Value = 0;
+   59          //画黑框（必须为一个像素宽度，边界务必空出一格）
+   60          /**
+   61          * 函数功能：      图像补黑框
+   62          * 特殊说明：      注意黑框与边界间隔一格像素宽度
+   63          * 形  参：        uint8 black_box_value            黑框的灰度值
+   64          *                uint8(*image)[Image_X]            要补黑框的图像
+   65          *
+   66          * 示例：          Draw_Black_Box(Black_Box_Value, Find_Line_Image);
+   67          * 返回值：        无
+   68          */
+   69          void Draw_Black_Box(uint8 black_box_value, uint8(*image)[Image_X])          
+   70          {
+   71   1          uint8 i,j;
+   72   1      
+   73   1          for(i = 2; i < Image_Y; i++)
+   74   1          {
+   75   2              image[i][Image_X - 3] = black_box_value;
+   76   2              image[i][2] = black_box_value;
+   77   2          }
+   78   1          for(j = 2; j < Image_X - 3; j++)
+   79   1          {
+   80   2              image[1][j] = black_box_value;
+   81   2          }
+   82   1      }
+   83          
+   84          //****************************************************************
+   85          
+   86          //// 快速整数开平方（输入0~65535，输出0~255）
+   87          //uint8 Fast_Sqrt8(uint16 val)
+   88          //{
+   89          //    uint8 i;
+   90          //    uint8 res = 0;
+   91          //    uint8 b = 128;
+   92          //    for(i=0; i<8; i++)
+   93          //    {
+   94          //        uint8 temp = res | b;
+   95          //        if((uint16)temp * temp <= val)
+   96          //            res = temp;
+   97          //        b >>= 1;
+   98          //    }
+   99          //    return res;
+  100          //}
+  101          
+  102          //uint8 Adaptive_L_Thres_Max = 0;     //左侧阈值最大值
+  103          //uint8 Adaptive_R_Thres_Max = 0;     //右侧阈值最大值
+  104          //uint8 Adaptive_L_Thres_Min = 0;     //左侧阈值最小值
+  105          //uint8 Adaptive_R_Thres_Min = 0;     //右侧阈值最小值
+  106          //uint8 Adaptive_Thres_Average = 0;   //阈值均值
+  107          //uint8 Last_Adaptive_Thres_Average = 0;  //用于阈值均值滤波
+  108          ///**
+  109          //* 函数功能：      提取阈值中的最大最小值,并求出阈值均值
+  110          //* 特殊说明：      计算时间小于5us
+  111          //* 形  参：        无
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 3   
+
+  112          //*
+  113          //* 示例：          Thres_Record_Process（）；
+  114          //* 返回值：        无
+  115          //*/
+  116          //void Thres_Record_Process(void)
+  117          //{
+  118          //    uint8 i = 0;
+  119          //    uint8 Left_Temp_Value_1 = 0;
+  120          //    uint16 Left_Temp_Value_2 = 0;
+  121          //    uint8 Right_Temp_Value_1 = 0;
+  122          //    uint16 Right_Temp_Value_2 = 0;
+  123          //    uint8 L_Average_Thres = 0;
+  124          //    uint8 R_Average_Thres = 0;
+  125          // 
+  126          //    Adaptive_L_Thres_Max = 0;
+  127          //    Adaptive_R_Thres_Max = 0;
+  128          //    Adaptive_L_Thres_Min = 0;
+  129          //    Adaptive_R_Thres_Min = 0;
+  130          // 
+  131          //    Adaptive_L_Thres_Max = L_Thres_Record[0];
+  132          //    Adaptive_L_Thres_Min = L_Thres_Record[0];
+  133          //    Adaptive_R_Thres_Max = R_Thres_Record[0];
+  134          //    Adaptive_R_Thres_Min = R_Thres_Record[0];
+  135          // 
+  136          //    for(i = 0; i < Adaptive_L_Statics; i += 2)      //间隔取值即可，减少计算量
+  137          //    {
+  138          //        if(Adaptive_L_Line[i][0] != 2 && Adaptive_L_Line[i][1] != 2)      //舍去位于黑框上的边
+             -线点阈值，“2”即左边线位于黑框上时的X坐标
+  139          //        {
+  140          //            if(L_Thres_Record[i] < Adaptive_L_Thres_Min)
+  141          //            {
+  142          //                Adaptive_L_Thres_Min = L_Thres_Record[i];
+  143          //            }
+  144          //            if(L_Thres_Record[i] > Adaptive_L_Thres_Max)
+  145          //            {
+  146          //                Adaptive_L_Thres_Max = L_Thres_Record[i];
+  147          //            }
+  148          //            Left_Temp_Value_1 ++;
+  149          //            Left_Temp_Value_2 += L_Thres_Record[i];
+  150          //        }
+  151          //    }
+  152          //  
+  153          //    for(i = 0; i < Adaptive_R_Statics; i += 2)
+  154          //    {
+  155          //        if(Adaptive_R_Line[i][0] != 77 && Adaptive_R_Line[i][1] != 2)       //与左侧同理
+  156          //        {
+  157          //            if(R_Thres_Record[i] < Adaptive_R_Thres_Min)
+  158          //            {
+  159          //                Adaptive_R_Thres_Min = R_Thres_Record[i];
+  160          //            }
+  161          //            if(R_Thres_Record[i] > Adaptive_R_Thres_Max)
+  162          //            {
+  163          //                Adaptive_R_Thres_Max = R_Thres_Record[i];
+  164          //            }
+  165          //            Right_Temp_Value_1 ++;
+  166          //            Right_Temp_Value_2 += R_Thres_Record[i];
+  167          //        }
+  168          //    }
+  169          // 
+  170          //    if(Left_Temp_Value_1 == 0)      //当左侧边线全部位于边界上时，直接将阈值均值�
+             -�0
+  171          //    {
+  172          //        L_Average_Thres = 0;
+  173          //    }
+  174          //    else        //求出左侧阈值均值
+  175          //    {
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 4   
+
+  176          //        L_Average_Thres = (uint8)(Left_Temp_Value_2 / Left_Temp_Value_1);
+  177          //    }
+  178          // 
+  179          //    if(Right_Temp_Value_1 == 0)     //与左侧同理
+  180          //    {
+  181          //        R_Average_Thres = 0;
+  182          //    }
+  183          //    else
+  184          //    {
+  185          //        R_Average_Thres = (uint8)(Right_Temp_Value_2 / Right_Temp_Value_1);
+  186          //    }
+  187          // 
+  188          //    if(Image_Num <= 1)      //前两张图像直接求均值
+  189          //    {
+  190          //        Last_Adaptive_Thres_Average = (uint8)((L_Average_Thres + R_Average_Thres) / 2);
+  191          //    }
+  192          //    else
+  193          //    {
+  194          //        if( My_ABS_uint8(L_Average_Thres - R_Average_Thres) >= 40)       //当两侧边线的阈值均�
+             -��相差过大时，进一步处理
+  195          //        {
+  196          //            if( My_ABS_uint8(L_Average_Thres - Last_Adaptive_Thres_Average) <= My_ABS_uint8(R_Average_T
+             -hres - Last_Adaptive_Thres_Average))      //选取两侧阈值均值最接近上次图像阈值均值的值作为此次�
+             -��值
+  197          //            {
+  198          //                Adaptive_Thres_Average = (uint8)((Last_Adaptive_Thres_Average + L_Average_Thres) / 2);
+  199          //                Last_Adaptive_Thres_Average = Adaptive_Thres_Average;
+  200          //            }
+  201          //            else
+  202          //            {
+  203          //                Adaptive_Thres_Average = (uint8)((Last_Adaptive_Thres_Average + R_Average_Thres) / 2);
+  204          //                Last_Adaptive_Thres_Average = Adaptive_Thres_Average;
+  205          //            }
+  206          //        }
+  207          //        else    //当两侧阈值均值相差不大时，直接求三者均值
+  208          //        {
+  209          //            Adaptive_Thres_Average = (uint8)((Last_Adaptive_Thres_Average + L_Average_Thres + R_Average
+             -_Thres) / 3);
+  210          //            Last_Adaptive_Thres_Average = Adaptive_Thres_Average;
+  211          //        }
+  212          //    }
+  213          // 
+  214          //    //获得判断斑马线的阈值
+  215          //   // Zbra_Thres = Adaptive_Thres_Average - 10;
+  216          // 
+  217          //    //获得起始点差比和的阈值
+  218          //    if(Adaptive_Thres_Average >= 100 && Adaptive_Thres_Average <= 140)      //阈值均值落在100 - 1
+             -40之间，说明图像亮度很合适，此时将差比和阈值设为20即可
+  219          //    {
+  220          //        Compare_Value = 20;
+  221          //    }
+  222          //    else if(Adaptive_Thres_Average < 100)
+  223          //    {
+  224          //        Compare_Value = 20 - (uint8)(((100 - Adaptive_Thres_Average) * 10) / 60 );      //当小于100�
+             -��，适当拉低差比和阈值，使其在图像较暗的情况下更容易找出赛道边线
+  225          //    }
+  226          //    else if(Adaptive_Thres_Average > 140)
+  227          //    {
+  228          //        Compare_Value = 20 - (uint8)(((Adaptive_Thres_Average - 140) * 10 ) / 60 );      //当大于140
+             -时，适当拉低差比和阈值，使其在图像较亮的情况下更容易找出赛道边线
+  229          //    }
+  230          //    //求黑框灰度值
+  231          //    Black_Box_Value = (uint8)(9 * (uint8)sqrt(Adaptive_L_Thres_Min * Adaptive_L_Thres_Min + Adaptive_R_
+             -Thres_Min * Adaptive_R_Thres_Min)) / 20 + (uint8)(uint8)Black_Box_Value_1 / 10;      
+  232          //    //0.45f即0.9 * 0.5，0.9为权重，0.5可自己调节。Black_Box_Value_1为两侧爬线起点的
+             -灰度值均值（起点值灰度值为图像中赛道黑线的灰度值，不可为黑框灰度值，可以自己写算
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 5   
+
+             -法处理下）
+  233          //    //或者Black_Box_Value_1直接丢20 ~ 50之间的值即可
+  234          //  
+  235          //}
+  236          
+  237          
+  238          uint8 Adaptive_L_Thres_Max = 0;     //左侧阈值最大值
+  239          uint8 Adaptive_R_Thres_Max = 0;     //右侧阈值最大值
+  240          uint8 Adaptive_L_Thres_Min = 0;     //左侧阈值最小值
+  241          uint8 Adaptive_R_Thres_Min = 0;     //右侧阈值最小值
+  242          uint8 Adaptive_Thres_Average = 0;   //阈值均值
+  243          uint8 Last_Adaptive_Thres_Average = 0;  //用于阈值均值滤波
+  244          /**
+  245          * 函数功能：      提取阈值中的最大最小值,并求出阈值均值
+  246          * 特殊说明：      计算时间小于5us
+  247          * 形  参：        无
+  248          *
+  249          * 示例：          Thres_Record_Process（）；
+  250          * 返回值：        无
+  251          */
+  252          void Thres_Record_Process(void)
+  253          {
+  254   1          uint8 i = 0;
+  255   1          uint8 Left_Temp_Value_1 = 0;
+  256   1          uint32 Left_Temp_Value_2 = 0;
+  257   1          uint8 Right_Temp_Value_1 = 0;
+  258   1          uint32 Right_Temp_Value_2 = 0;
+  259   1          uint8 L_Average_Thres = 0;
+  260   1          uint8 R_Average_Thres = 0;
+  261   1       
+  262   1          Adaptive_L_Thres_Max = 0;
+  263   1          Adaptive_R_Thres_Max = 0;
+  264   1          Adaptive_L_Thres_Min = 0;
+  265   1          Adaptive_R_Thres_Min = 0;
+  266   1       
+  267   1          Adaptive_L_Thres_Max = L_Thres_Record[0];
+  268   1          Adaptive_L_Thres_Min = L_Thres_Record[0];
+  269   1          Adaptive_R_Thres_Max = R_Thres_Record[0];
+  270   1          Adaptive_R_Thres_Min = R_Thres_Record[0];
+  271   1       
+  272   1          for(i = 0; i < Adaptive_L_Statics; i += 2)      //间隔取值即可，减少计算量
+  273   1          {
+  274   2              if(Adaptive_L_Line[i][0] != 2 && Adaptive_L_Line[i][1] != 2)      //舍去位于黑框上的边�
+             -�点阈值，“2”即左边线位于黑框上时的X坐标
+  275   2              {
+  276   3                  if(L_Thres_Record[i] < Adaptive_L_Thres_Min)
+  277   3                  {
+  278   4                      Adaptive_L_Thres_Min = L_Thres_Record[i];
+  279   4                  }
+  280   3                  if(L_Thres_Record[i] > Adaptive_L_Thres_Max)
+  281   3                  {
+  282   4                      Adaptive_L_Thres_Max = L_Thres_Record[i];
+  283   4                  }
+  284   3                  Left_Temp_Value_1 ++;
+  285   3                  Left_Temp_Value_2 += L_Thres_Record[i];
+  286   3              }
+  287   2          }
+  288   1          for(i = 0; i < Adaptive_R_Statics; i += 2)
+  289   1          {
+  290   2              if(Adaptive_R_Line[i][0] != 77 && Adaptive_R_Line[i][1] != 2)       //与左侧同理
+  291   2              {
+  292   3                  if(R_Thres_Record[i] < Adaptive_R_Thres_Min)
+  293   3                  {
+  294   4                      Adaptive_R_Thres_Min = R_Thres_Record[i];
+  295   4                  }
+  296   3                  if(R_Thres_Record[i] > Adaptive_R_Thres_Max)
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 6   
+
+  297   3                  {
+  298   4                      Adaptive_R_Thres_Max = R_Thres_Record[i];
+  299   4                  }
+  300   3                  Right_Temp_Value_1 ++;
+  301   3                  Right_Temp_Value_2 += R_Thres_Record[i];
+  302   3              }
+  303   2          }
+  304   1       
+  305   1          if(Left_Temp_Value_1 == 0)      //当左侧边线全部位于边界上时，直接将阈值均值取0
+  306   1          {
+  307   2              L_Average_Thres = 0;
+  308   2          }
+  309   1          else        //求出左侧阈值均值
+  310   1          {
+  311   2              L_Average_Thres = (uint8)(Left_Temp_Value_2 / Left_Temp_Value_1);
+  312   2          }
+  313   1       
+  314   1          if(Right_Temp_Value_1 == 0)     //与左侧同理
+  315   1          {
+  316   2              R_Average_Thres = 0;
+  317   2          }
+  318   1          else
+  319   1          {
+  320   2              R_Average_Thres = (uint8)(Right_Temp_Value_2 / Right_Temp_Value_1);
+  321   2          }
+  322   1       
+  323   1          if(Image_Num <= 1)      //前两张图像直接求均值
+  324   1          {
+  325   2              Last_Adaptive_Thres_Average = (uint8)((L_Average_Thres + R_Average_Thres) / 2);
+  326   2          }
+  327   1          else
+  328   1          {
+  329   2              if( My_ABS_uint8(L_Average_Thres - R_Average_Thres) >= 40)       //当两侧边线的阈值均值
+             -相差过大时，进一步处理
+  330   2              {
+  331   3                  if( My_ABS_uint8(L_Average_Thres - Last_Adaptive_Thres_Average) <= My_ABS_uint8(R_Average_Thr
+             -es - Last_Adaptive_Thres_Average))      //选取两侧阈值均值最接近上次图像阈值均值的值作为此次的
+             -值
+  332   3                  {
+  333   4                      Adaptive_Thres_Average = (uint8)((Last_Adaptive_Thres_Average + L_Average_Thres) / 2);
+  334   4                      Last_Adaptive_Thres_Average = Adaptive_Thres_Average;
+  335   4                  }
+  336   3                  else
+  337   3                  {
+  338   4                      Adaptive_Thres_Average = (uint8)((Last_Adaptive_Thres_Average + R_Average_Thres) / 2);
+  339   4                      Last_Adaptive_Thres_Average = Adaptive_Thres_Average;
+  340   4                  }
+  341   3              }
+  342   2              else    //当两侧阈值均值相差不大时，直接求三者均值
+  343   2              {
+  344   3                  Adaptive_Thres_Average = (uint8)((Last_Adaptive_Thres_Average + L_Average_Thres + R_Average_T
+             -hres) / 3);
+  345   3                  Last_Adaptive_Thres_Average = Adaptive_Thres_Average;
+  346   3              }
+  347   2          }
+  348   1       
+  349   1          //获得判断斑马线的阈值
+  350   1         // Zbra_Thres = Adaptive_Thres_Average - 10;
+  351   1       
+  352   1          //获得起始点差比和的阈值
+  353   1          if(Adaptive_Thres_Average >= 100 && Adaptive_Thres_Average <= 140)      //阈值均值落在100 - 140
+             -之间，说明图像亮度很合适，此时将差比和阈值设为20即可
+  354   1          {
+  355   2              Compare_Value = 15;   // 保持原始值，避免噪声导致边线提取异常
+  356   2          }
+  357   1          else if(Adaptive_Thres_Average < 100)
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 7   
+
+  358   1          {
+  359   2              Compare_Value = 20 - (uint8)(((float)(100 - Adaptive_Thres_Average) / 60.0f) * 10.0f);      //当
+             -小于100时，适当拉低差比和阈值，使其在图像较暗的情况下更容易找出赛道边线
+  360   2          }
+  361   1          else if(Adaptive_Thres_Average > 140)
+  362   1          {
+  363   2              Compare_Value = 20 - (uint8)(((float)(Adaptive_Thres_Average - 140) / 60.0f) * 10.0f);      //当
+             -大于140时，适当拉低差比和阈值，使其在图像较亮的情况下更容易找出赛道边线
+  364   2          }
+  365   1          //求黑框灰度值
+  366   1          //    Black_Box_Value = (uint8)(0.45f * (float)sqrt(Adaptive_L_Thres_Min * Adaptive_L_Thres_Min + Ada
+             -ptive_R_Thres_Min * Adaptive_R_Thres_Min)) + (uint8)(0.1f * (float)Black_Box_Value_1);
+  367   1          // Black_Box_Value = (uint8)(0.45f * (float)Fast_Sqrt16((uint16)(Adaptive_L_Thres_Min * Adaptive_L_Th
+             -res_Min + Adaptive_R_Thres_Min * Adaptive_R_Thres_Min))) + (uint8)(0.1f * (float)Black_Box_Value_1);      
+  368   1          //0.45f即0.9 * 0.5，0.9为权重，0.5可自己调节。Black_Box_Value_1为两侧爬线起点的�
+             -�度值均值（起点值灰度值为图像中赛道黑线的灰度值，不可为黑框灰度值，可以自己写算�
+             -�处理下）
+  369   1          //或者Black_Box_Value_1直接丢20 ~ 50之间的值即可
+  370   1      }
+  371          
+  372          void Process_Image(void)
+  373          {
+  374   1      
+  375   1          Adaptive_L_Statics = 0;
+  376   1          Adaptive_R_Statics = 0;
+  377   1      
+  378   1              Copy_Zip_Image( );  //ѹ��ͼ���ɣ�188��120��ѹ��Ϊ��80 ��60��
+  379   1            
+  380   1            Draw_Black_Box(Black_Box_Value, Find_Line_Image);  //ͼ���ⲿ���ڿ�����һ�б߽
+             -磩
+  381   1            
+  382   1            if(Get_Start_Point(Image_Y - 3, Find_Line_Image, Adaptive_L_Start_Point, Adaptive_R_Start_Point, 2, 77
+             -) ==1 )
+  383   1            {
+  384   2      //        
+  385   2              Dir_Labyrinth_5( (uint8)150, Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line, Adaptive_L_Grow_Dir, 
+             -Adaptive_R_Grow_Dir, &Adaptive_L_Statics, &Adaptive_R_Statics, &Adaptive_X_Meet, &Adaptive_Y_Meet,
+  386   2                  Adaptive_L_Start_Point[0],Adaptive_L_Start_Point[1],Adaptive_R_Start_Point[0], Adaptive_R_Start_Poi
+             -nt[1], Clip_Value );
+  387   2      //                    
+  388   2      
+  389   2      //        
+  390   2      //        if( (( Adaptive_L_Statics <= 15 && Adaptive_R_Statics - Adaptive_L_Statics >= 20 ) || ( Adaptive_R_
+             -Statics <= 15 && Adaptive_L_Statics - Adaptive_R_Statics >= 20 )) )
+  391   2      //        {
+  392   2      //          Adaptive_L_Statics = 0;
+  393   2      //          Adaptive_R_Statics = 0;
+  394   2      //          if(Get_Start_Point(47, Find_Line_Image, Adaptive_L_Start_Point, Adaptive_R_Start_Point, 2, 77) == 
+             -1)
+  395   2      //          {
+  396   2      
+  397   2      //            Dir_Labyrinth_5((uint8)150, Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line, Adaptive_L_Grow_Di
+             -r, Adaptive_R_Grow_Dir, &Adaptive_L_Statics, &Adaptive_R_Statics, &Adaptive_X_Meet, &Adaptive_Y_Meet,
+  398   2      //                      Adaptive_L_Start_Point[0], Adaptive_L_Start_Point[1], Adaptive_R_Start_Point[0], Adapti
+             -ve_R_Start_Point[1], Clip_Value);
+  399   2      ////            
+  400   2      //          }
+  401   2      //        }
+  402   2              
+  403   2              if( (( Adaptive_L_Statics <= 15 && Adaptive_R_Statics - Adaptive_L_Statics >= 20 ) || ( Adaptive_R_St
+             -atics <= 15 && Adaptive_L_Statics - Adaptive_R_Statics >= 20 )) )
+  404   2              {
+  405   3                  // ===== 保存第一次扫描的底部数据（Y >= 48 的点）=====
+  406   3                  uint16 saved_L_bottom = 0;
+  407   3                  uint16 saved_R_bottom = 0;
+  408   3                  uint16 idx;
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 8   
+
+  409   3                  uint16 k;
+  410   3      
+  411   3                  // 找出左侧 Y >= 48 的底部点个数
+  412   3                  // Adaptive_L_Line 从 index 0 开始是从下往上存储的（Y 递减）
+  413   3                  for(idx = 0; idx < Adaptive_L_Statics; idx++)
+  414   3                  {
+  415   4                      if(Adaptive_L_Line[idx][1] >= 48)
+  416   4                          saved_L_bottom = idx + 1;
+  417   4                      else
+  418   4                          break;
+  419   4                  }
+  420   3                  // 找出右侧 Y >= 48 的底部点个数
+  421   3                  for(idx = 0; idx < Adaptive_R_Statics; idx++)
+  422   3                  {
+  423   4                      if(Adaptive_R_Line[idx][1] >= 48)
+  424   4                          saved_R_bottom = idx + 1;
+  425   4                      else
+  426   4                          break;
+  427   4                  }
+  428   3      
+  429   3                  // 尝试从 row 47 重扫
+  430   3                  if(Get_Start_Point(47, Find_Line_Image, Adaptive_L_Start_Point,
+  431   3                                     Adaptive_R_Start_Point, 2, 77) == 1)
+  432   3                  {
+  433   4                      // 把第一次扫描的底部数据暂存到临时数组
+  434   4                      uint8 temp_L_line[15][2];
+  435   4                      uint8 temp_R_line[15][2];
+  436   4                      int8  temp_L_dir[15];
+  437   4                      int8  temp_R_dir[15];
+  438   4      
+  439   4                      for(k = 0; k < saved_L_bottom; k++)
+  440   4                      {
+  441   5                          temp_L_line[k][0] = Adaptive_L_Line[k][0];
+  442   5                          temp_L_line[k][1] = Adaptive_L_Line[k][1];
+  443   5                          temp_L_dir[k]     = Adaptive_L_Grow_Dir[k];
+  444   5                      }
+  445   4                      for(k = 0; k < saved_R_bottom; k++)
+  446   4                      {
+  447   5                          temp_R_line[k][0] = Adaptive_R_Line[k][0];
+  448   5                          temp_R_line[k][1] = Adaptive_R_Line[k][1];
+  449   5                          temp_R_dir[k]     = Adaptive_R_Grow_Dir[k];
+  450   5                      }
+  451   4      
+  452   4                      // 清零并重扫（重扫覆盖 Adaptive_L_Line[0..M]，row 47→顶部）
+  453   4                      Adaptive_L_Statics = 0;
+  454   4                      Adaptive_R_Statics = 0;
+  455   4                      Dir_Labyrinth_5((uint8)150, Find_Line_Image, Adaptive_L_Line,
+  456   4                          Adaptive_R_Line, Adaptive_L_Grow_Dir, Adaptive_R_Grow_Dir,
+  457   4                          &Adaptive_L_Statics, &Adaptive_R_Statics,
+  458   4                          &Adaptive_X_Meet, &Adaptive_Y_Meet,
+  459   4                          Adaptive_L_Start_Point[0], Adaptive_L_Start_Point[1],
+  460   4                          Adaptive_R_Start_Point[0], Adaptive_R_Start_Point[1], Clip_Value);
+  461   4      
+  462   4                      // 把保存的底部数据追加到重扫数据后面
+  463   4                      // Get_Border 按 Y 坐标自行整理每行的最佳值，追加顺序不影响结果
+  464   4                      for(k = 0; k < saved_L_bottom; k++)
+  465   4                      {
+  466   5                          Adaptive_L_Line[Adaptive_L_Statics][0] = temp_L_line[k][0];
+  467   5                          Adaptive_L_Line[Adaptive_L_Statics][1] = temp_L_line[k][1];
+  468   5                          Adaptive_L_Grow_Dir[Adaptive_L_Statics]  = temp_L_dir[k];
+  469   5                          Adaptive_L_Statics++;
+  470   5                      }
+  471   4                      for(k = 0; k < saved_R_bottom; k++)
+  472   4                      {
+  473   5                          Adaptive_R_Line[Adaptive_R_Statics][0] = temp_R_line[k][0];
+  474   5                          Adaptive_R_Line[Adaptive_R_Statics][1] = temp_R_line[k][1];
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 9   
+
+  475   5                          Adaptive_R_Grow_Dir[Adaptive_R_Statics]  = temp_R_dir[k];
+  476   5                          Adaptive_R_Statics++;
+  477   5                      }
+  478   4                  }
+  479   3                  // 如果 Get_Start_Point(47) 失败 → 第一次扫描数据保留不变
+  480   3                  // （statics 没被清零，Adaptive_L_Line 没被覆盖）
+  481   3              }
+  482   2      
+  483   2              
+  484   2            }
+  485   1                
+  486   1      //      Thres_Record_Process( );  //  &&&&&����&&&&&
+  487   1      
+  488   1            Get_Border(Adaptive_L_Statics, Adaptive_R_Statics, Image_Y - 3, 2, L_Border, R_Border, Adaptive_L_Line
+             -, Adaptive_R_Line);//��ȡһά����
+  489   1      }
+  490          
+  491          void photo_send(void)
+  492          {
+  493   1        uint8 j = 0;
+  494   1        uint8 i_photo_send = 0; 
+  495   1        
+  496   1            memset(xy_x1_boundary, 0, BOUNDARY_NUM);
+  497   1            memset(xy_y1_boundary, 0, BOUNDARY_NUM);
+  498   1            memset(xy_x2_boundary, 0, BOUNDARY_NUM);
+  499   1            memset(xy_y2_boundary, 0, BOUNDARY_NUM);
+  500   1            memset(xy_x3_boundary, 0, BOUNDARY_NUM);
+  501   1            memset(xy_y3_boundary, 0, BOUNDARY_NUM);
+  502   1            
+  503   1        
+  504   1        
+  505   1        for( i_photo_send = 0 ; i_photo_send < Adaptive_L_Statics ; i_photo_send++)
+  506   1            {
+  507   2              xy_x1_boundary[i_photo_send] = Adaptive_L_Line[i_photo_send][0];
+  508   2              xy_y1_boundary[i_photo_send] = Adaptive_L_Line[i_photo_send][1];
+  509   2            }
+  510   1        
+  511   1            //右线
+  512   1            for( i_photo_send = 0 ; i_photo_send < Adaptive_R_Statics ; i_photo_send++)
+  513   1            {
+  514   2              xy_x2_boundary[i_photo_send] = Adaptive_R_Line[i_photo_send][0];
+  515   2                  xy_y2_boundary[i_photo_send] = Adaptive_R_Line[i_photo_send][1];
+  516   2            }
+  517   1        
+  518   1           //中线
+  519   1            for( i_photo_send = 2 ; i_photo_send < Image_Y - 5 ; i_photo_send++ )
+  520   1            {
+  521   2              xy_x3_boundary[j] = C_Line[i_photo_send];
+  522   2              xy_y3_boundary[j] = i_photo_send;
+  523   2              j++;
+  524   2            }
+  525   1            j=0;
+  526   1      
+  527   1                    memcpy(image_copy[0], Find_Line_Image[0], Image_X * Image_Y);
+  528   1      
+  529   1                  // // // 发送图像
+  530   1                    seekfree_assistant_camera_send();
+  531   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      3688     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+C251 COMPILER V5.60.0,  img_process                                                        12/09/26  19:11:25  PAGE 10  
+
+  xdata size           =       131     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =      4800     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        54     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

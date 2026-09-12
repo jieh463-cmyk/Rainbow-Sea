@@ -1,0 +1,175 @@
+C251 COMPILER V5.60.0,  servo                                                              12/09/26  19:11:28  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE servo
+OBJECT MODULE PLACED IN .\out_file\servo.obj
+COMPILER INVOKED BY: E:\keilC251\C251\BIN\C251.EXE ..\speed_control\servo.c LARGE FLOAT64 ROM(HUGE) WARNINGLEVEL(3) OPTI
+                    -MIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libra
+                    -ries\zf_driver;..\user;..\code;..\..\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assis
+                    -tant;..\img_process;..\find_line;..\image_information;..\speed_control;..\element_process) DEBUG PRINT(.\out_file\servo.
+                    -lst) TABS(2) OBJECT(.\out_file\servo.obj) 
+
+stmt  level    source
+
+    1          /********************************************************************************************************
+             -*************
+    2          /********************************************************************************************************
+             -*************
+    3          * STC32G144K Opensourec Library ¼´£¨STC32G144K ¿ªÔ´¿â£©ÊÇÒ»¸ö»ùÓÚ¹Ù·½ SDK ½Ó�
+             -�ÚµÄµÚÈý·½¿ªÔ´¿â
+    4          * Copyright (c) 2025 SEEKFREE Öð·É¿Æ¼¼
+    5          *
+    6          * ±¾ÎÄ¼þÊÇSTC32G144K¿ªÔ´¿âµÄÒ»²¿·Ö
+    7          *
+    8          * STC32G144K ¿ªÔ´¿â ÊÇÃâ·ÑÈí¼þ
+    9          * Äú¿ÉÒÔ¸ù¾Ý×ÔÓÉÈí¼þ»ù½ð»á·¢²¼µÄ GPL£¨GNU General Public License£¬¼´ 
+             -GNUÍ¨ÓÃ¹«¹²Ðí¿ÉÖ¤£©µÄÌõ¿î
+   10          * ¼´ GPL µÄµÚ3°æ£¨¼´ GPL3.0£©»ò£¨ÄúÑ¡ÔñµÄ£©ÈÎºÎºóÀ´µÄ°æ±¾£¬Ö
+             -ØÐÂ·¢²¼ºÍ/»òÐÞ¸ÄËü
+   11          *
+   12          * ±¾¿ªÔ´¿âµÄ·¢²¼ÊÇÏ£ÍûËüÄÜ·¢»Ó×÷ÓÃ£¬µ«²¢Î´¶ÔÆä×÷ÈÎºÎµ�
+             -�±£Ö¤
+   13          * ÉõÖÁÃ»ÓÐÒþº¬µÄÊÊÏúÐÔ»òÊÊºÏÌØ¶¨ÓÃÍ¾µÄ±£Ö¤
+   14          * ¸ü¶àÏ¸½ÚÇë²Î¼û GPL
+   15          *
+   16          * ÄúÓ¦¸ÃÔÚÊÕµ½±¾¿ªÔ´¿âµÄÍ¬Ê±ÊÕµ½Ò»·Ý GPL µÄ¸±±¾
+   17          * Èç¹ûÃ»ÓÐ£¬Çë²ÎÔÄ<https://www.gnu.org/licenses/>
+   18          *
+   19          * ¶îÍâ×¢Ã÷£º
+   20          * ±¾¿ªÔ´¿âÊ¹ÓÃ GPL3.0 ¿ªÔ´Ðí¿ÉÖ¤Ð­Òé ÒÔÉÏÐí¿ÉÉêÃ÷ÎªÒëÎÄ°æ±
+             -¾
+   21          * Ðí¿ÉÉêÃ÷Ó¢ÎÄ°æÔÚ libraries/doc ÎÄ¼þ¼ÐÏÂµÄ GPL3_permission_statement.txt ÎÄ�
+             -�þÖÐ
+   22          * Ðí¿ÉÖ¤¸±±¾ÔÚ libraries ÎÄ¼þ¼ÐÏÂ ¼´¸ÃÎÄ¼þ¼ÐÏÂµÄ LICENSE ÎÄ¼þ
+   23          * »¶Ó­¸÷Î»Ê¹ÓÃ²¢´«²¥±¾³ÌÐò µ«ÐÞ¸ÄÄÚÈÝÊ±±ØÐë±£ÁôÖð·É¿Æ¼
+             -¼µÄ°æÈ¨ÉùÃ÷£¨¼´±¾ÉùÃ÷£©
+   24          *
+   25          * ÎÄ¼þÃû³Æ          
+   26          * ¹«Ë¾Ãû³Æ          ³É¶¼Öð·É¿Æ¼¼ÓÐÏÞ¹«Ë¾
+   27          * °æ±¾ÐÅÏ¢          ²é¿´ libraries/doc ÎÄ¼þ¼ÐÄÚ version ÎÄ¼þ °æ±¾ËµÃ÷
+   28          * ¿ª·¢»·¾³          MDK FOR C251
+   29          * ÊÊÓÃÆ½Ì¨          STC32G144K
+   30          * µêÆÌÁ´½Ó          https://seekfree.taobao.com/
+   31          *
+   32          * ÐÞ¸Ä¼ÇÂ¼
+   33          * ÈÕÆÚ              ×÷Õß           ±¸×¢
+   34          * 2025-11-20        ´óW            first version
+   35          *********************************************************************************************************
+             -***********/
+   36          
+   37          #include "file_h_all.h"
+   38          
+   39          // *************************** Àý³ÌÓ²¼þÁ¬½ÓËµÃ÷ ***************************
+   40          // ½ÓÈë¶æ»ú Ö÷°åÉÏ¶ÔÓ¦ÓÐ¶æ»úµÄ½Ó¿Ú Îñ±Ø×¢Òâ²»Òª²å·´ <ºìÉ
+             -«µçÔ´> <ºÚÉ«ÐÅºÅ> <»ÆÉ«/³ÈÉ«/×ØÉ«/°×É«...ÆäËü²ÊÉ«µÄÄÇ¸ùÊÇÐÅºÅ>
+   41          //      Ä£¿é¹Ü½Å            µ¥Æ¬»ú¹Ü½Å
+   42          //      PWM1                A0
+   43          //      PWM2                A2
+   44          //      PWM3                A4
+C251 COMPILER V5.60.0,  servo                                                              12/09/26  19:11:28  PAGE 2   
+
+   45          //      PWM4                A6
+   46          //      GND                 ¶æ»úµçÔ´ GND ÁªÍ¨ ºËÐÄ°åµçÔ´µØ GND
+   47          //      VCC                 ¶æ»úµçÔ´Êä³ö
+   48          
+   49          
+   50          // *************************** Àý³Ì²âÊÔËµÃ÷ ***************************
+   51          // 1.ºËÐÄ°åÉÕÂ¼Íê³É±¾Àý³Ì
+   52          //
+   53          // 2.ÔÚ¶ÏµçÇé¿öÏÂ Íê³ÉºËÐÄ°å²åµ½Ö÷°åµÄºËÐÄ°å²å×ùÉÏ È·ÈÏº
+             -ËÐÄ°åÓëÖ÷°å²å×ùÃ»ÓÐÃ÷ÏÔ·ìÏ¶
+   54          //
+   55          // 3.È»ºó½«¶æ»úÓëÖ÷°åÕýÈ·Á¬½Ó ÇëÎñ±Ø×¢Òâ²»Òª²å·´ È»ºóÊ¹Ó
+             -Ãµç³Ø¸øÖ÷°å¹©µç´ò¿ª¿ª¹Ø
+   56          //
+   57          // 4.Õý³£Çé¿öÏÂ¶æ»ú»áÀ´»Ø×ª¶¯ ×îºÃÔÚ¶æ»úÃ»ÓÐ×°ÔÚ³µÉÏ¹Ì¶�
+             -�Á¬½Ó×ªÏòÁ¬¸ËÊ±²âÊÔ ·ÀÖ¹°²×°Î»ÖÃ²»¶ÔÔì³É¶Â×ªÉÕ¶æ»ú
+   58          //
+   59          // Èç¹û·¢ÏÖÏÖÏóÓëËµÃ÷ÑÏÖØ²»·û Çë²ÎÕÕ±¾ÎÄ¼þ×îÏÂ·½ Àý³Ì³£
+             -¼ûÎÊÌâËµÃ÷ ½øÐÐÅÅ²é
+   60          
+   61          
+   62          // **************************** ´úÂëÇøÓò ****************************
+   63          #define CHANNEL_NUMBER          (4)
+   64          #define SERVO_PWM1              (PWME_CH1P_PA0)                         // ¶¨ÒåÖ÷°åÉÏ¶æ»ú¶
+             -ÔÓ¦Òý½Å
+   65          #define SERVO_PWM2              (PWME_CH2P_PA2)                         // ¶¨ÒåÖ÷°åÉÏ¶æ»ú¶
+             -ÔÓ¦Òý½Å
+   66          #define SERVO_PWM3              (PWME_CH3P_PA4)                         // ¶¨ÒåÖ÷°åÉÏ¶æ»ú¶
+             -ÔÓ¦Òý½Å
+   67          #define SERVO_PWM4              (PWME_CH4P_PA6)                         //舵机引脚
+   68          
+   69          #define SERVO_FREQ              (200 )                                           // ¶¨ÒåÖ÷°åÉÏ�
+             -�æ»úÆµÂÊ  ÇëÎñ±Ø×¢Òâ·¶Î§ 50-300
+   70          
+   71          #define SERVO_L_MAX             (80 )                                           // ¶¨ÒåÖ÷°åÉÏ¶
+             -æ»ú»î¶¯·¶Î§ ½Ç¶È
+   72          #define SERVO_R_MAX             (100)                                           // ¶¨ÒåÖ÷°åÉÏ¶
+             -æ»ú»î¶¯·¶Î§ ½Ç¶È
+   73          
+   74          // ------------------ ¶æ»úÕ¼¿Õ±È¼ÆËã·½Ê½ ------------------
+   75          //
+   76          // ¶æ»ú¶ÔÓ¦µÄ 0-180 »î¶¯½Ç¶È¶ÔÓ¦ ¿ØÖÆÂö³åµÄ 0.5ms-2.5ms ¸ßµçÆ½
+   77          //
+   78          // ÄÇÃ´²»Í¬ÆµÂÊÏÂµÄÕ¼¿Õ±È¼ÆËã·½Ê½¾ÍÊÇ
+   79          // PWM_DUTY_MAX/(1000/freq)*(1+Angle/180) ÔÚ 50hz Ê±¾ÍÊÇ PWM_DUTY_MAX/(1000/50)*(1+Angle/180)
+   80          //
+   81          // ÄÇÃ´ 100hz ÏÂ 90¶ÈµÄ´ò½Ç ¼´¸ßµçÆ½Ê±¼ä1.5ms ¼ÆËãÌ×ÓÃÎª
+   82          // PWM_DUTY_MAX/(1000/100)*(1+90/180) = PWM_DUTY_MAX/10*1.5
+   83          //
+   84          // ------------------ ¶æ»úÕ¼¿Õ±È¼ÆËã·½Ê½ ------------------
+   85          //#define SERVO_DUTY(x)         ((float)PWM_DUTY_MAX / (1000.0 / (float)SERVO_FREQ) * (0.5 + (float)(x) /
+             - 90.0))
+   86          
+   87          #if ((SERVO_FREQ < 50) || (SERVO_FREQ > 300))
+                   #error "SERVO_MOTOR_FREQ ERROE!"
+               #endif
+   90          
+   91          
+   92          int16 servo_motor_duty = 2950;     ///中值                                             
+   93          
+   94          
+   95          void servo_init(void)
+   96          {
+   97   1           pwm_init(SERVO_PWM1, SERVO_FREQ, 0);  // PA0
+   98   1           pwm_init(SERVO_PWM2, SERVO_FREQ, 0);  // PA2
+   99   1           pwm_init(SERVO_PWM3, SERVO_FREQ, 0);  // PA4
+C251 COMPILER V5.60.0,  servo                                                              12/09/26  19:11:28  PAGE 3   
+
+  100   1           pwm_init(SERVO_PWM4, SERVO_FREQ, 0);  // PA6
+  101   1      
+  102   1      }
+  103          
+  104          void servo_control(servo_motor_duty)
+  105          {
+*** WARNING C35 IN LINE 105 OF ..\speed_control\servo.c: 'servo_control': uses old-style declarator
+  106   1         pwm_set_duty(SERVO_PWM1, servo_motor_duty);
+  107   1         pwm_set_duty(SERVO_PWM2, servo_motor_duty);
+  108   1         pwm_set_duty(SERVO_PWM3, servo_motor_duty);
+  109   1         pwm_set_duty(SERVO_PWM4, servo_motor_duty);
+  110   1      }
+  111          
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       176     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =         4     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =         7     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

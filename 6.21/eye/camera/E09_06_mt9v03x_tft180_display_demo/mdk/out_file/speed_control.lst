@@ -1,0 +1,179 @@
+C251 COMPILER V5.60.0,  speed_control                                                      12/09/26  19:11:28  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE speed_control
+OBJECT MODULE PLACED IN .\out_file\speed_control.obj
+COMPILER INVOKED BY: E:\keilC251\C251\BIN\C251.EXE ..\speed_control\speed_control.c LARGE FLOAT64 ROM(HUGE) WARNINGLEVEL
+                    -(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\
+                    -..\libraries\zf_driver;..\user;..\code;..\..\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfr
+                    -ee_assistant;..\img_process;..\find_line;..\image_information;..\speed_control;..\element_process) DEBUG PRINT(.\out_fil
+                    -e\speed_control.lst) TABS(2) OBJECT(.\out_file\speed_control.obj) 
+
+stmt  level    source
+
+    1          #include "file_h_all.h"
+    2          
+    3          int8 out_flag=1;
+    4          int16 lock_time;
+    5          
+    6          //#define BRAKE_FRAMES   25    // É²³µ³ÖÐøÖ¡Êý
+    7          //#define BRAKE_SPEED    25    // É²³µÆÚ¼äµÄÄ¿±êËÙ¶È
+    8          //#define REARM_FRAMES   30    // °Ð×ÓÏûÊ§¶àÉÙÖ¡ºóÔÊÐí´òÏÂÒ»¸ö
+    9          
+   10          //static uint8  laser_done      = 0;   // ±¾´Î°Ð×ÓÒÑ´¦Àí
+   11          //static uint8  brake_cnt       = 0;   // É²³µµ¹¼ÆÊ±
+   12          //static uint16 laser_rearm_cnt = 0;   // ÖØÐÂ×°µ¯µ¹¼ÆÊ±
+   13          
+   14          void speed_control()
+   15          {
+   16   1         Bound_Lost_Detect();
+   17   1          
+   18   1          if(Out_Bound_Flag == 1 || stop_flag == 2 )         //³ö½ç
+   19   1          {
+   20   2            if(up_flag == 1)   // ¡ïÖ»ÓÐÅÜÆðÀ´Ö®ºó²ÅÓÀ¾ÃËøËÀ
+   21   2            {
+   22   3                out_flag = 0;
+   23   3            }
+   24   2            
+   25   2            photo_flag=0;
+   26   2            time_flag=0;
+   27   2            out_flag=0;
+   28   2            motor1_pid.Target=0;
+   29   2            motor2_pid.Target=0;
+   30   2            
+   31   2      //      pwm_set_duty(BRUSHLESS_PWM_3, 500);
+   32   2      //            pwm_set_duty(BRUSHLESS_PWM_4, 500);
+   33   2            
+   34   2      //      tft180_show_string(0,80, "");     
+   35   2      //      tft180_show_int32(64, 80, time_ms);
+   36   2      //      tft180_show_string(0 , 2*16, "t_ms:");   tft180_show_int32(6*6, 2*16, time_ms,5);
+   37   2      //      
+   38   2      //      tft180_show_string(0,64, "p_cnt:");     
+   39   2      //      tft180_show_int32(8*6, 64, photo_cnt,8);
+   40   2      //      
+   41   2      //      motor1_control(motor1_duty);
+   42   2      //      motor2_control(motor2_duty);
+   43   2          
+   44   2            // ????????,????
+   45   2            Last_Deviation_Value = 0;
+   46   2          }
+   47   1          
+   48   1          else                           //Î´³ö½ç
+   49   1          {
+   50   2            
+   51   2      //      if(Deviation_Value > -5 && Deviation_Value < 5)
+   52   2      //      {
+   53   2      //        servo_motor_duty = 3000;
+   54   2      //        servo_control(servo_motor_duty);
+   55   2      //      }
+C251 COMPILER V5.60.0,  speed_control                                                      12/09/26  19:11:28  PAGE 2   
+
+   56   2      //      else
+   57   2      //      {
+   58   2      //        imu660ra_get_gyro();
+   59   2      //        // === É²³µµ¹¼ÆÊ±£º¸²¸Ç t ===
+   60   2      //        if(brake_cnt > 0)
+   61   2      //        {
+   62   2      //            t = BRAKE_SPEED;
+   63   2      //            brake_cnt--;
+   64   2      //        }
+   65   2      
+   66   2      //        // === °Ð×Ó¼ì²â ¡ú´¥·¢É²³µ ===
+   67   2      //        if(ring_shot_flag && !laser_done)
+   68   2      //        {
+   69   2      //            brake_cnt = BRAKE_FRAMES;
+   70   2      //            laser_done = 1;
+   71   2      //        }
+   72   2      
+   73   2      //        // === °Ð×ÓÀë¿ªºóÖØÐÂ×°µ¯ ===
+   74   2      //        if(laser_done)
+   75   2      //        {
+   76   2      //            if(!ring_shot_flag)
+   77   2      //                laser_rearm_cnt++;
+   78   2      //            else
+   79   2      //                laser_rearm_cnt = 0;
+   80   2      
+   81   2      //            if(laser_rearm_cnt > REARM_FRAMES)
+   82   2      //            {
+   83   2      //                laser_done = 0;
+   84   2      //                laser_rearm_cnt = 0;
+   85   2      //                laser_fired = 0;
+   86   2      //            }
+   87   2      //        }
+   88   2              servo_update(&servo_pid);
+   89   2              servo_motor_duty = 2950 + servo_pid.servo_out;
+   90   2              servo_control(servo_motor_duty);
+   91   2        
+   92   2      ////      }
+   93   2      //      imu_flag=1;
+   94   2            
+   95   2            if(out_flag == 1)     
+   96   2            {
+   97   3              
+   98   3              up_pid_1.Target=50;
+   99   3              up_pid_2.Target=50;
+  100   3              if(servo_pid.servo_out>=0)//ÓÒ×ª
+  101   3              {
+  102   4      //          motor1_pid.Target=t;///×óÂÖ¼ÓËÙ
+  103   4      //          motor2_pid.Target=t;
+  104   4                motor1_pid.Target=t+speed_diff(t)*0.5;///×óÂÖ¼ÓËÙ
+  105   4                motor2_pid.Target=t-speed_diff(t)*1.1;
+  106   4              }
+  107   3              else ///×ó×ª
+  108   3              {
+  109   4      //          motor1_pid.Target=t;///×óÂÖ¼ÓËÙ
+  110   4      //          motor2_pid.Target=t;
+  111   4                motor1_pid.Target=t-speed_diff(t)*1.1;//×óÂÖ¼õËÙ
+  112   4                motor2_pid.Target=t+speed_diff(t)*0.5;
+  113   4              }
+  114   3              
+  115   3      //        motor1_pid.Target=t;
+  116   3      //        motor2_pid.Target=t;
+  117   3            }
+  118   2                
+  119   2      
+  120   2          }
+  121   1          
+C251 COMPILER V5.60.0,  speed_control                                                      12/09/26  19:11:28  PAGE 3   
+
+  122   1      //    if((encoder_data_dir_1<30&&motor2_pid.Out>5000)||(encoder_data_dir_2<30&&motor2_pid.Out>5000))  //·
+             -À¶Â×ª
+  123   1      //    {
+  124   1      //       lock_time++;
+  125   1      //    }
+  126   1      //    else 
+  127   1      //    {
+  128   1      //      lock_time=0;
+  129   1      //    }
+  130   1      //    
+  131   1      //    if(lock_time>=50)
+  132   1      //    {
+  133   1      //      Out_Bound_Flag = 1 ;
+  134   1      //    }
+  135   1      
+  136   1      
+  137   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =       422     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =         3     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =         6     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

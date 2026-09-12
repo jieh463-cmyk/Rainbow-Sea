@@ -1,0 +1,1056 @@
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE element_judge
+OBJECT MODULE PLACED IN .\out_file\element_judge.obj
+COMPILER INVOKED BY: E:\keilC251\C251\BIN\C251.EXE ..\image_information\element_judge.c LARGE FLOAT64 ROM(HUGE) WARNINGL
+                    -EVEL(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device
+                    -;..\..\libraries\zf_driver;..\user;..\code;..\..\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\se
+                    -ekfree_assistant;..\img_process;..\find_line;..\image_information;..\speed_control;..\element_process) DEBUG PRINT(.\out
+                    -_file\element_judge.lst) TABS(2) OBJECT(.\out_file\element_judge.obj) 
+
+stmt  level    source
+
+    1          #include "file_h_all.h"
+    2          
+    3          #define Derailment     1        //出赛道
+    4          #define Straightaway   2        //直道
+    5          #define L_Turn         3        //左转弯道
+    6          #define R_Turn         4        //右转弯道
+    7          #define L_Circle       5        //左环岛
+    8          #define R_Circle       6        //右环岛
+    9          #define Cross          7        //十字路口
+   10          #define Zebra          8        //斑马线
+   11          #define Ramp           9        //坡道
+   12          #define Barrier        11       //障碍
+   13          #define L_Oblique_Cross 16    //左斜入
+   14          #define R_Oblique_Cross 17    //右斜入
+   15          #define Small_S        18       //小S弯
+   16          
+   17          
+   18          
+   19          uint8 L_C_cnt=0;
+   20          uint8 R_C_cnt=0;
+   21          
+   22          uint8 Element = 0;
+   23          
+   24          uint8 Straightaway_Flag = 1;       //直道             0：关闭        1：开启
+   25          uint8 L_Turn_Flag = 1;       //左转弯道         0：关闭        1：开启
+   26          uint8 R_Turn_Flag = 1;       //右转弯道         0：关闭        1：开启
+   27          uint8 L_Circle_Flag = 1;       //左环岛           0：关闭        1：单边巡线处理          
+   28          uint8 R_Circle_Flag = 1;       //右环岛           0：关闭        1：单边巡线处理           
+   29          uint8 Cross_Flag = 0;       //十字路口         0：关闭        1：不做特殊处理     
+   30          uint8 L_Oblique_Cross_Flag = 0;       //斜十字路口       0：关闭        1：开启（补线处理
+             -）
+   31          uint8 R_Oblique_Cross_Flag = 0;       //斜十字路口       0：关闭        1：开启（补线处理
+             -）
+   32          uint8 Zebra_Flag = 1;       //斑马线           0：关闭        1：开启
+   33          uint8 Ramp_Flag = 0;       //坡道             0：关闭        1：开启
+   34          uint8 Three_Bif_Flag = 0;       //三岔             0：关闭        1：开启
+   35          uint8 Barrier_Flag = 0;       //障碍             0：关闭        1：开启
+   36          uint8 Disconnection_Flag = 0;       //断路             0：关闭        1：开启
+   37          uint8 T_Way_Flag = 0;       //T路口            0：关闭        1：开启
+   38          uint8 L_Garage_Flag = 0;       //左车库           0：关闭        1：开启
+   39          uint8 R_Garage_Flag = 0;       //右车库           0：关闭        1：开启
+   40          uint8 Small_S_Flag = 1;       //小S弯            0:关闭         1:识别
+   41          
+   42          // 出界检测相关变量
+   43          uint8 Line_Lost_Flag = 0;       // 丢线标志（0：正常，1：丢线）
+   44          uint8 Out_Bound_Cnt = 0;        // 出界计数器（连续异常帧计数）
+   45          uint8 Out_Bound_Flag = 0;       // 出界标志（0：正常，1：出界）
+   46          
+   47          uint8 Zebra_Count_Flag = 0;
+   48          
+   49          // uint8 shot_flag = 0;
+   50          uint8 shot_CD = 0 ;
+   51          uint8 shot_CD_flag = 0;
+   52          uint8 shot_CD_cnt = 0;
+   53          
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 2   
+
+   54          uint16 shot_center_x = 0;
+   55          uint16 shot_center_y = 0;
+   56          uint8  lamp = 0;
+   57          
+   58          
+   59          uint8 stop_flag = 0;
+   60          
+   61          uint8 Element_Judgement(uint8(*image)[Image_X], uint16 l_total_num, uint16 r_total_num, int8* l_dir, int8
+             -* r_dir, uint8(*l_line)[2], uint8(*r_line)[2], uint8 Adaptive_X_Meet, uint8 Adaptive_Y_Meet,
+   62              uint8* l_border, uint8* r_border)
+   63          {
+   64   1          uint8 Element_t = 0;
+   65   1          uint8 i = 0;
+   66   1          uint8 r_bottom_lost;
+   67   1          static uint8 r_lost_filtered = 0;
+   68   1          //斑马线判断
+   69   1           if(Zebra_Flag != 0)
+   70   1           {
+   71   2               uint8 Black_Num = 0;
+   72   2               for(i = L_Border[41]; i < R_Border[41]; i ++)
+   73   2               {
+   74   3                   if( ( Find_Line_Image[41][i] - Find_Line_Image[41][i+1] >= 15 || Find_Line_Image[41][i] - Fi
+             -nd_Line_Image[41][i+1] <= -15 ) )
+   75   3                   {
+   76   4                       Black_Num ++;
+   77   4                   }
+   78   3               }
+   79   2               for(i = L_Border[46]; i < R_Border[46]; i ++)
+   80   2               {
+   81   3                   if( ( Find_Line_Image[46][i] - Find_Line_Image[46][i+1] >= 15 || Find_Line_Image[46][i] - Fi
+             -nd_Line_Image[46][i+1] <= -15 ) )
+   82   3                   {
+   83   4                       Black_Num ++;
+   84   4                   }
+   85   3               }
+   86   2               if(Black_Num >= 18)
+   87   2               {
+   88   3                   //Element_t = Zebra;
+   89   3             if (stop_flag == 1) stop_flag = 2;
+   90   3             //zebra_found_flag = 1;
+   91   3               }
+   92   2           }
+   93   1      
+   94   1          //直线判断
+   95   1          if (Element_t == 0 && Straightaway_Flag != 0)
+   96   1          {
+   97   2              if (L_Straight_Flag == 1 && R_Straight_Flag == 1)
+   98   2              {
+   99   3      
+  100   3                  if (Adaptive_Y_Meet <= 20 && Adaptive_X_Meet <= 55 && Adaptive_X_Meet >=0 )
+  101   3                  {
+  102   4                      Element_t = Straightaway;
+  103   4                  }
+  104   3              }
+  105   2      
+  106   2              //        //坡道判断嵌入直线判断内
+  107   2              //        if(Element_t == Straightaway && Ramp_Flag != 0 && Image_Num >= 10)
+  108   2              //        {
+  109   2              //            if(Barrier_Distance <= 700 && L_Border_Point_Num <= 8 && R_Border_Point_Num <= 8 &&
+             - Adaptive_Y_Meet <= 4)
+  110   2              //            {
+  111   2              //                Element_t = Ramp;
+  112   2              //            }
+  113   2              //        }
+  114   2          }
+  115   1      
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 3   
+
+  116   1          //左弯道判断
+  117   1          if (Element_t == 0 && L_Turn_Flag != 0)
+  118   1          {
+  119   2              if (Adaptive_X_Meet <= 30 && Adaptive_Y_Meet >= 4 && L_Border_Point_Num >= 5 && L_UP_Border_Point
+             -_Num == 0 && R_UP_Border_Point_Num == 0 && R_Border_Point_Num <= 1)
+  120   2              {
+  121   3                  Element_t = L_Turn;
+  122   3              }
+  123   2          }
+  124   1          //右弯道判断
+  125   1          if (Element_t == 0 && R_Turn_Flag != 0)
+  126   1          {
+  127   2              if (Adaptive_X_Meet >= 50 && Adaptive_Y_Meet >= 4 && R_Border_Point_Num >= 5 && L_UP_Border_Point
+             -_Num == 0 && R_UP_Border_Point_Num == 0 && L_Border_Point_Num <= 1)
+  128   2              {
+  129   3                  Element_t = R_Turn;
+  130   3              }
+  131   2          }
+  132   1      
+  133   1          //十字路口判断
+  134   1              //正入判断
+  135   1          if (Element_t == 0 && Cross_Flag != 0)
+  136   1          {
+  137   2              if ((L_Up_Turn_Left_Point_Flag_1 + R_Up_Turn_Right_Point_Flag_1 + L_Right_Turn_Up_Point_Flag_1 + 
+             -R_Left_Turn_Up_Point_Flag_1) >= 3)
+  138   2              {
+  139   3                  uint8 L_Count = 0;
+  140   3                  uint8 R_Count = 0;
+  141   3                  //判断左右各有大量横向生长的点
+  142   3                  for (i = 0; i < l_total_num; i++)
+  143   3                  {
+  144   4                      if (l_dir[i] == (-3) || l_dir[i] == 3)
+  145   4                      {
+  146   5                          L_Count++;
+  147   5                      }
+  148   4                  }
+  149   3                  for (i = 0; i < r_total_num; i++)
+  150   3                  {
+  151   4                      if (r_dir[i] == (-3) || r_dir[i] == 3)
+  152   4                      {
+  153   5                          R_Count++;
+  154   5                      }
+  155   4                  }
+  156   3                  if (L_Count >= 10 && R_Count >= 10 && L_Border_Point_Num >= 6 && R_Border_Point_Num >= 6)
+  157   3                  {
+  158   4                      if (Relative_Border_Point_Num >= 6)
+  159   4                      {
+  160   5                          Element_t = Cross;
+  161   5                      }
+  162   4                  }
+  163   3              }
+  164   2          }
+  165   1          
+  166   1          //判断左环岛
+  167   1              //一次远距判断
+  168   1          if ( Element_t == 0 && L_Circle_Flag != 0)
+  169   1          {
+  170   2             if (L_Up_Turn_Left_Point_Flag_1 == 1 && R_Up_Turn_Right_Point_Flag_1 == 0 && R_Left_Turn_Up_Point_
+             -Flag == 0 && R_Left_Turn_Up_Point_Flag_1 == 0 &&
+  171   2             (R_Straightaway_Lope_Rate_A > R_Straightaway_Lope_Rate_C) ? (R_Straightaway_Lope_Rate_A - R_Straight
+             -away_Lope_Rate_C) : (R_Straightaway_Lope_Rate_C - R_Straightaway_Lope_Rate_A)  <= Min_Slope_Dif_Thre && 
+  172   2      (R_Straightaway_Lope_Rate_B > R_Straightaway_Lope_Rate_C) ? (R_Straightaway_Lope_Rate_B - R_Straightaway_
+             -Lope_Rate_C) : (R_Straightaway_Lope_Rate_C - R_Straightaway_Lope_Rate_B)  <= Min_Slope_Dif_Thre     )
+  173   2             {
+  174   3                 // 右侧中段有效性检查：中段大量落在黑框=刚恢复丢线=S弯，非环岛
+  175   3                 r_bottom_lost = 0;
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 4   
+
+  176   3                 for (i = 5; i < 30; i++) {
+  177   4                     if (R_Border[i] >= 76) r_bottom_lost++;
+  178   4                 }
+  179   3                 r_lost_filtered += (r_bottom_lost - r_lost_filtered) >> 3;
+  180   3                 tft180_show_int32(0, 120, r_lost_filtered, 2);
+  181   3                 if (r_lost_filtered < 6 && R_Border_Point_Num <=15 &&  L_Border_Point_Num >= 5 && L_Up_Turn_Le
+             -ft_Point_1[1] >= 14 /*&& R_UP_Border_Point_Num > 1*/ )
+  182   3                 {
+  183   4                     uint8 Temp_Num = 0;
+  184   4                     for (i = 0; i < Adaptive_R_Statics / 2; i++)
+  185   4                     {
+  186   5                         if (Adaptive_R_Grow_Dir[i] == -3 || Adaptive_R_Grow_Dir[i] == 3)
+  187   5                         {
+  188   6                             Temp_Num++;
+  189   6                         }
+  190   5                     }
+  191   4                     if (Temp_Num <= 3)
+  192   4                     {
+  193   5                         if (Relative_Border_Point_Num <= 3)
+  194   5                         {
+  195   6                             //buzzer_flag = 1;
+  196   6                             Element_t = L_Circle;
+  197   6                   L_Circle_State = 1;
+  198   6                   //L_C_cnt++;
+  199   6                         }
+  200   5                     }
+  201   4                 }
+  202   3             }
+  203   2          }
+  204   1          //二次近距判断
+  205   1          if (Element_t == 0 && L_Circle_Flag != 0)
+  206   1          {
+  207   2             //判断左存在拐点, 判断右侧为直线
+  208   2             if (L_Up_Turn_Left_Point_Flag_1 == 1 && R_Up_Turn_Right_Point_Flag_1 == 0  && L_Arc_Turn_Point_Fla
+             -g == 1 && R_Left_Turn_Up_Point_Flag == 0 && R_Left_Turn_Up_Point_Flag_1 == 0 &&
+  209   2      (R_Straightaway_Lope_Rate_A > R_Straightaway_Lope_Rate_C) ? (R_Straightaway_Lope_Rate_A - R_Straightaway_
+             -Lope_Rate_C) : (R_Straightaway_Lope_Rate_C - R_Straightaway_Lope_Rate_A)  <= Min_Slope_Dif_Thre  &&
+  210   2      (R_Straightaway_Lope_Rate_B > R_Straightaway_Lope_Rate_C) ? (R_Straightaway_Lope_Rate_B - R_Straightaway_
+             -Lope_Rate_C) : (R_Straightaway_Lope_Rate_C - R_Straightaway_Lope_Rate_B)  <= Min_Slope_Dif_Thre     )
+  211   2             {
+  212   3                 // 右侧中段有效性检查：中段大量落在黑框=刚恢复丢线=S弯，非环岛
+  213   3                 r_bottom_lost = 0;
+  214   3                 for (i = 5; i < 30; i++) {
+  215   4                     if (R_Border[i] >= 76) r_bottom_lost++;
+  216   4                 }
+  217   3                 r_lost_filtered += (r_bottom_lost - r_lost_filtered) >> 3;
+  218   3                 tft180_show_int32(60, 120, r_lost_filtered, 2);
+  219   3                 if (r_lost_filtered < 6 && L_Up_Turn_Left_Point_1[1] > 18  && (L_Up_Turn_Left_Point_1[1] - L_A
+             -rc_Turn_Point[0][1]) >= 10 /*&& R_UP_Border_Point_Num > 1*/ )// && (L_Up_Turn_Left_Point_1[1] - L_Arc_Turn_Point[0][1]) 
+             -> 15)
+  220   3                 {
+  221   4                     //判断右侧直线不在边界上
+  222   4                     if (/*R_Border_Point_Num <= 3 && */L_Border_Point_Num >= 18)
+  223   4                     {
+  224   5                         uint8 Temp_Num = 0;
+  225   5                         for (i = 0; i < Adaptive_R_Statics / 2; i++)
+  226   5                         {
+  227   6                             if (Adaptive_R_Grow_Dir[i] == -3 || Adaptive_R_Grow_Dir[i] == 3)
+  228   6                             {
+  229   7                                 Temp_Num++;
+  230   7                             }
+  231   6                         }
+  232   5                         if (Temp_Num <= 8)
+  233   5                         {
+  234   6                             if (Relative_Border_Point_Num <= 3)
+  235   6                             {
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 5   
+
+  236   7                                 //buzzer_flag = 1;
+  237   7                                 Element_t = L_Circle;
+  238   7                     L_Circle_State = 1;
+  239   7                     //L_C_cnt++;
+  240   7                             }
+  241   6                         }
+  242   5                     }
+  243   4                 }
+  244   3             }
+  245   2          }
+  246   1        
+  247   1        if (Element_t == 0 && L_Circle_Flag != 0)
+  248   1          {
+  249   2            //判断左存在拐点, 判断右侧为直线
+  250   2             if (L_Right_Turn_Up_Point_Flag == 1 && R_Up_Turn_Right_Point_Flag_1 == 0  && L_Arc_Turn_Point_Flag
+             - == 1 && R_Left_Turn_Up_Point_Flag == 0 && R_Left_Turn_Up_Point_Flag_1 == 0 &&
+  251   2      (R_Straightaway_Lope_Rate_A > R_Straightaway_Lope_Rate_C) ? (R_Straightaway_Lope_Rate_A - R_Straightaway_
+             -Lope_Rate_C) : (R_Straightaway_Lope_Rate_C - R_Straightaway_Lope_Rate_A)  <= Min_Slope_Dif_Thre  && 
+  252   2      (R_Straightaway_Lope_Rate_B > R_Straightaway_Lope_Rate_C) ? (R_Straightaway_Lope_Rate_B - R_Straightaway_
+             -Lope_Rate_C) : (R_Straightaway_Lope_Rate_C - R_Straightaway_Lope_Rate_B)  <= Min_Slope_Dif_Thre     )
+  253   2           {
+  254   3             if (r_lost_filtered < 6 && L_Arc_Turn_Point[0][1] > 20  && (L_Arc_Turn_Point[0][1] - L_Right_Turn_Up
+             -_Point[1] ) >= 10 /*&& R_UP_Border_Point_Num > 1*/ )// && (L_Up_Turn_Left_Point_1[1] - L_Arc_Turn_Point[0][1]) > 15)
+  255   3                 {
+  256   4                     //判断右侧直线不在边界上
+  257   4                     if (/*R_Border_Point_Num <= 3 && */L_Border_Point_Num <= 25 && L_Border_Point_Num >= 7 )
+  258   4                     {
+  259   5                         uint8 Temp_Num = 0;
+  260   5                         for (i = 0; i < Adaptive_R_Statics / 2; i++)
+  261   5                         {
+  262   6                             if (Adaptive_R_Grow_Dir[i] == -3 || Adaptive_R_Grow_Dir[i] == 3)
+  263   6                             {
+  264   7                                 Temp_Num++;
+  265   7                             }
+  266   6                         }
+  267   5                         if (Temp_Num <= 8)
+  268   5                         {
+  269   6                             if (Relative_Border_Point_Num <= 3)
+  270   6                             {
+  271   7                                 //buzzer_flag = 1;
+  272   7                                 Element_t = L_Circle;
+  273   7                     L_Circle_State = 2;
+  274   7                     //L_C_cnt++;
+  275   7                             }
+  276   6                         }
+  277   5                     }
+  278   4                 }
+  279   3             
+  280   3           }   
+  281   2          
+  282   2        }
+  283   1        
+  284   1          //三次斜入判断(偏向圆环一侧)
+  285   1      //    if (Element == 0 &&  L_Circle_Flag != 0)
+  286   1      //    {
+  287   1      //        if (Adaptive_Y_Meet >= 3 /*&&  Adaptive_X_Meet <= 30  */&& Adaptive_R_Start_Point[0] == 76)
+  288   1      //        {
+  289   1      //            uint8 Temp_Num = 0;
+  290   1      //            for (i = 57; i > 2; i--)
+  291   1      //            {
+  292   1      //                if (L_Border[i] == 3 && R_Border[i] != 76)
+  293   1      //                {
+  294   1      //                    Temp_Num++;
+  295   1      //                }
+  296   1      //                if (L_Border[i] != 3 && R_Border[i] == 76)
+  297   1      //                {
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 6   
+
+  298   1      //                    Temp_Num++;
+  299   1      //                }
+  300   1      //            }
+  301   1      //            if (Temp_Num >= 20  && R_UP_Border_Point_Num >= 3  && L_Border_Point_Num >= 25 /*&& R_Borde
+             -r_Point_Num >= 13 */ )
+  302   1      //            {
+  303   1      //                uint8 Temp_Num_2 = 0;
+  304   1      //                for (i = 0; i < Adaptive_R_Statics / 2; i++)
+  305   1      //                {
+  306   1      //                    if (Adaptive_R_Grow_Dir[i] == -3 || Adaptive_R_Grow_Dir[i] == 3)
+  307   1      //                    {
+  308   1      //                        Temp_Num_2++;
+  309   1      //                    }
+  310   1      //                }
+  311   1      ////                if (Temp_Num_2 <= 4)
+  312   1      ////                {
+  313   1      ////                    if (Relative_Border_Point_Num <= 3)
+  314   1      ////                    {
+  315   1      //                        //buzzer_flag = 1;
+  316   1      //                        Element_t = L_Circle;
+  317   1      //            //L_C_cnt++;
+  318   1      ////                    }
+  319   1      ////                }
+  320   1      //            }
+  321   1      //        }
+  322   1      //    }
+  323   1      //  if(L_C_cnt>=2){
+  324   1      //    Element_t = L_Circle;
+  325   1      //    L_C_cnt=0;
+  326   1      //  }
+  327   1      
+  328   1          //    //四次斜入判断（偏向直线一侧）
+  329   1      //    if (Element_t == 0 && L_Circle_Flag != 0)
+  330   1      //    {
+  331   1      //        if (Adaptive_L_Start_Point[0] <= 10 && Adaptive_R_Start_Point[0] <= 75 )
+  332   1      //        {
+  333   1      //            if (L_Border_Point_Num >= 20 && L_Arc_Turn_Point_Flag == 1  && L_Up_Turn_Left_Point_Flag_1 
+             -== 0 )
+  334   1      //            {
+  335   1      //                if (R_Straight_Flag == 1 && R_Border_Point_Num <= 8)
+  336   1      //                {
+  337   1      //                    if (Adaptive_Y_Meet >= 3  && Adaptive_X_Meet <= 40 )
+  338   1      //                    {
+  339   1      //                        //buzzer_flag = 1;
+  340   1      //                        Element_t = L_Circle;
+  341   1      //                    }
+  342   1      //                }
+  343   1      //            }
+  344   1      //        }
+  345   1      //    }
+  346   1      
+  347   1          // //判断右环岛
+  348   1          //     //一次远距判断
+  349   1          if (Element_t == 0 && R_Circle_Flag != 0)
+  350   1          {
+  351   2              if (L_Up_Turn_Left_Point_Flag_1 == 0 && R_Up_Turn_Right_Point_Flag_1 == 1  && 
+  352   2            (L_Straightaway_Lope_Rate_A > L_Straightaway_Lope_Rate_C) ? (L_Straightaway_Lope_Rate_A - L_Straightaw
+             -ay_Lope_Rate_C) : (L_Straightaway_Lope_Rate_C - L_Straightaway_Lope_Rate_A)  <= Min_Slope_Dif_Thre && 
+  353   2            (L_Straightaway_Lope_Rate_B > L_Straightaway_Lope_Rate_C) ? (L_Straightaway_Lope_Rate_B - L_Straightaw
+             -ay_Lope_Rate_C) : (L_Straightaway_Lope_Rate_C - L_Straightaway_Lope_Rate_B)  <= Min_Slope_Dif_Thre)
+  354   2              {
+  355   3                  if ( /* L_Border_Point_Num <=3 && */   L_Border_Point_Num <=15 &&  R_Border_Point_Num >= 5  &
+             -& R_Up_Turn_Right_Point_1[1] >= 18  && L_UP_Border_Point_Num > 1)
+  356   3                  {
+  357   4                      uint8 Temp_Num = 0;
+  358   4                      for (i = 0; i < Adaptive_L_Statics / 2; i++)
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 7   
+
+  359   4                      {
+  360   5                          if (Adaptive_L_Grow_Dir[i] == -3 || Adaptive_L_Grow_Dir[i] == 3)
+  361   5                          {
+  362   6                              Temp_Num++;
+  363   6                          }
+  364   5                      }
+  365   4                      if (Temp_Num <= 3)
+  366   4                      {
+  367   5                          if (Relative_Border_Point_Num <= 3)
+  368   5                          {
+  369   6                              //buzzer_flag = 1;
+  370   6                              Element_t = R_Circle;
+  371   6                  R_Circle_State = 1;
+  372   6                  //R_C_cnt++;
+  373   6                          }
+  374   5                      }
+  375   4                  }
+  376   3              }
+  377   2          }
+  378   1          //二次近距判断
+  379   1          if (Element_t == 0 && R_Circle_Flag != 0)
+  380   1          {
+  381   2              //判断右存在拐点, 判断左侧为直线
+  382   2              if (R_Up_Turn_Right_Point_Flag_1 == 1 && L_Up_Turn_Left_Point_Flag_1 == 0  && R_Arc_Turn_Point_Fl
+             -ag == 1 && 
+  383   2            (L_Straightaway_Lope_Rate_A > L_Straightaway_Lope_Rate_C) ? (L_Straightaway_Lope_Rate_A - L_Straightaw
+             -ay_Lope_Rate_C) : (L_Straightaway_Lope_Rate_C - L_Straightaway_Lope_Rate_A)  <= Min_Slope_Dif_Thre && 
+  384   2            (L_Straightaway_Lope_Rate_B > L_Straightaway_Lope_Rate_C) ? (L_Straightaway_Lope_Rate_B - L_Straightaw
+             -ay_Lope_Rate_C) : (L_Straightaway_Lope_Rate_C - L_Straightaway_Lope_Rate_B)  <= Min_Slope_Dif_Thre )
+  385   2              {
+  386   3                  if (R_Up_Turn_Right_Point_1[1] > 20 && (R_Up_Turn_Right_Point_1[1] - R_Arc_Turn_Point[0][1]) 
+             ->= 10  && L_UP_Border_Point_Num > 1)//(R_Up_Turn_Right_Point_1[1] - R_Arc_Turn_Point[0][1]) > 15)
+  387   3                  {
+  388   4                      //判断左侧直线不在边界上
+  389   4                      if (/* L_Border_Point_Num <=3 && */ R_Border_Point_Num >= 18)
+  390   4                      {
+  391   5                          uint8 Temp_Num = 0;
+  392   5                          for (i = 0; i < Adaptive_L_Statics / 2; i++)
+  393   5                          {
+  394   6                              if (Adaptive_L_Grow_Dir[i] == -3 || Adaptive_L_Grow_Dir[i] == 3)
+  395   6                              {
+  396   7                                  Temp_Num++;
+  397   7                              }
+  398   6                          }
+  399   5                          if (Temp_Num <= 8)
+  400   5                          {
+  401   6                              if (Relative_Border_Point_Num <= 3)
+  402   6                              {
+  403   7                                  //buzzer_flag = 1;
+  404   7                                  Element_t = R_Circle;
+  405   7                    R_Circle_State = 1;
+  406   7                    //R_C_cnt++;
+  407   7                              }
+  408   6                          }
+  409   5                      }
+  410   4                  }
+  411   3              }
+  412   2          }
+  413   1          if (Element_t == 0 && R_Circle_Flag != 0)
+  414   1          {
+  415   2            //判断左存在拐点, 判断右侧为直线
+  416   2             if (R_Left_Turn_Up_Point_Flag == 1 && L_Up_Turn_Left_Point_Flag_1 == 0  && R_Arc_Turn_Point_Flag =
+             -= 1 && 
+  417   2      (L_Straightaway_Lope_Rate_A > L_Straightaway_Lope_Rate_C) ? (L_Straightaway_Lope_Rate_A - L_Straightaway_
+             -Lope_Rate_C) : (L_Straightaway_Lope_Rate_C - L_Straightaway_Lope_Rate_A)  <= Min_Slope_Dif_Thre  && 
+  418   2      (L_Straightaway_Lope_Rate_B > L_Straightaway_Lope_Rate_C) ? (L_Straightaway_Lope_Rate_B - L_Straightaway_
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 8   
+
+             -Lope_Rate_C) : (L_Straightaway_Lope_Rate_C - L_Straightaway_Lope_Rate_B)  <= Min_Slope_Dif_Thre     )
+  419   2           {
+  420   3             if ( R_Arc_Turn_Point[0][1] > 20 /* && (R_Arc_Turn_Point[0][1] - R_Left_Turn_Up_Point[1] ) >= 10 */&
+             -& L_UP_Border_Point_Num > 1 )// && (R_Up_Turn_Reft_Point_1[1] - R_Arc_Turn_Point[0][1]) > 15)
+  421   3                 {
+  422   4                     //判断右侧直线不在边界上
+  423   4                     if (/*R_Border_Point_Num <= 3 && */R_Border_Point_Num <= 25 && R_Border_Point_Num>=7)
+  424   4                     {
+  425   5                         uint8 Temp_Num = 0;
+  426   5                         for (i = 0; i < Adaptive_L_Statics / 2; i++)
+  427   5                         {
+  428   6                             if (Adaptive_L_Grow_Dir[i] == -3 || Adaptive_L_Grow_Dir[i] == 3)
+  429   6                             {
+  430   7                                 Temp_Num++;
+  431   7                             }
+  432   6                         }
+  433   5                         if (Temp_Num <= 8)
+  434   5                         {
+  435   6                             if (Relative_Border_Point_Num <= 3)
+  436   6                             {
+  437   7                                 //buzzer_flag = 1;
+  438   7                                 Element_t = R_Circle;
+  439   7                     R_Circle_State = 2;
+  440   7                     //L_C_cnt++;
+  441   7                             }
+  442   6                         }
+  443   5                     }
+  444   4                 }
+  445   3             
+  446   3           }
+  447   2             
+  448   2          
+  449   2         }
+  450   1      //    //三次斜入判断
+  451   1      //    if (Element == 0 && R_Circle_Flag != 0)
+  452   1      //    {
+  453   1      //        if (Adaptive_Y_Meet >= 3 && Adaptive_X_Meet >= 50 && Adaptive_L_Start_Point[0] == 3)
+  454   1      //        {
+  455   1      //            uint8 Temp_Num = 0;
+  456   1      //            for (i = 57; i > 2; i--)
+  457   1      //            {
+  458   1      //                if (L_Border[i] == 3 && R_Border[i] != 76)
+  459   1      //                {
+  460   1      //                    Temp_Num++;
+  461   1      //                }
+  462   1      //                if (L_Border[i] != 3 && R_Border[i] == 76)
+  463   1      //                {
+  464   1      //                    Temp_Num++;
+  465   1      //                }
+  466   1      //            }
+  467   1      //            if (Temp_Num >= 30 &&  L_UP_Border_Point_Num >= 3 &&  L_Border_Point_Num >= 13 &&  R_Border
+             -_Point_Num >= 16)
+  468   1      //            {
+  469   1      //                uint8 Temp_Num_2 = 0;
+  470   1      //                for (i = 0; i < Adaptive_R_Statics / 2; i++)
+  471   1      //                {
+  472   1      //                    if (Adaptive_L_Grow_Dir[i] == -3 || Adaptive_L_Grow_Dir[i] == 3)
+  473   1      //                    {
+  474   1      //                        Temp_Num_2++;
+  475   1      //                    }
+  476   1      //                }
+  477   1      //                if (Temp_Num_2 <= 4)
+  478   1      //                {
+  479   1      ////                    if (Relative_Border_Point_Num <= 3)
+  480   1      ////                    {
+  481   1      //                        //buzzer_flag = 1;
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 9   
+
+  482   1      //                        Element_t = R_Circle;
+  483   1      //            //R_C_cnt++;
+  484   1      ////                    }
+  485   1      //                }
+  486   1      //            }
+  487   1      //        }
+  488   1      //    }
+  489   1      //  if(R_C_cnt>=2){
+  490   1      //    Element_t = R_Circle;
+  491   1      //    R_C_cnt=0;
+  492   1      //  }
+  493   1          //    //四次斜入判断（偏向直线一侧）
+  494   1      //        if(Element_t == 0 && R_Circle_Flag != 0)
+  495   1      //        {
+  496   1      //            if( Adaptive_L_Start_Point[0] >= 5 && Adaptive_R_Start_Point[0] >= 70)
+  497   1      //            {
+  498   1      //                if(R_Border_Point_Num >= 20 && R_Arc_Turn_Point_Flag == 1  && R_Up_Turn_Right_Point_Fla
+             -g_1 == 0 )
+  499   1      //                {
+  500   1      //                    if(L_Straight_Flag == 1 && L_Border_Point_Num <= 8)
+  501   1      //                    {
+  502   1      //                        if(Adaptive_Y_Meet >= 3  && Adaptive_X_Meet >= 40  )
+  503   1      //                        {
+  504   1      //              
+  505   1      //                            Element_t = R_Circle;
+  506   1      //                        }
+  507   1      //                    }
+  508   1      //                }
+  509   1      //            }
+  510   1      //        }
+  511   1          
+  512   1              //小S弯判断
+  513   1             if(Element_t == 0 && Small_S_Flag != 0)
+  514   1             {
+  515   2                 if(L_Arc_Turn_Point_Flag == 1 && R_Arc_Turn_Point_Flag == 1 && ((L_Arc_Turn_Point_Num + R_Arc_
+             -Turn_Point_Num) >= 3))
+  516   2                 {
+  517   3                     if(Adaptive_Y_Meet <= 5)
+  518   3                     {
+  519   4                         Element_t = Small_S;
+  520   4                     }
+  521   3                 }
+  522   2             }
+  523   1         //    //左侧障碍物识别
+  524   1         //    if((Element_t == 0 || Element_t == Straightaway) && Barrier_Flag != 0)
+  525   1         //    {
+  526   1         //        if(L_Border_Point_Num == 0)
+  527   1         //        {
+  528   1         //            if(L_Straight_Flag == 1 && R_Straight_Flag == 1)
+  529   1         //            {
+  530   1         //                uint8 Temp_Barrier_Flag = 0;
+  531   1         //                for(i = 57; i > 2; i--)
+  532   1         //                {
+  533   1         //                    if(L_Border[i] - L_Border[i - 1] >= 5)
+  534   1         //                    {
+  535   1         //                        Temp_Barrier_Flag = 1;
+  536   1         //                        break;
+  537   1         //                    }
+  538   1         //                }
+  539   1         //                uint8 Temp_X = L_Border[i];
+  540   1         //                uint8 Temp_Y = i;
+  541   1         //                if(Temp_Barrier_Flag == 1)
+  542   1         //                {
+  543   1         //                    uint8 j = 0;
+  544   1         //                    uint8 Temp_Num = 0;
+  545   1         //                    for(i = Temp_Y - 5; i < Temp_Y; i++)
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 10  
+
+  546   1         //                    {
+  547   1         //                        for(j = Temp_X + 1; j < Temp_X + 6; j ++)
+  548   1         //                        {
+  549   1         //                            if(Find_Line_Image[i][j] < (Adaptive_Thres_Average - 20))
+  550   1         //                            {
+  551   1         //                                Temp_Num ++;
+  552   1         //                            }
+  553   1         //                        }
+  554   1         //                    }
+  555   1         //                    if(Temp_Num >= 23)
+  556   1         //                    {
+  557   1         //                        Element_t = L_Barrier;
+  558   1         //                    }
+  559   1         //                }
+  560   1         //            }
+  561   1         //        }
+  562   1         //    }
+  563   1      
+  564   1         //    //出赛道判断
+  565   1         //    if(Adaptive_Y_Meet >= 40 && L_Straightaway_Lope_Rate_A == L_Straightaway_Lope_Rate_B && L_Straig
+             -htaway_Lope_Rate_A == L_Straightaway_Lope_Rate_C
+  566   1         //                    && R_Straightaway_Lope_Rate_A == R_Straightaway_Lope_Rate_B && R_Straightaway_Lo
+             -pe_Rate_A == R_Straightaway_Lope_Rate_C)
+  567   1         //    {
+  568   1         //        Element_t = Derailment;
+  569   1         //    }
+  570   1         
+  571   1         if( Element_t == L_Circle || Element_t == R_Circle || Element_t == Cross ){
+  572   2          if(stop_flag == 0)stop_flag = 1;
+  573   2        }
+  574   1         
+  575   1          return Element_t;
+  576   1      }
+*** WARNING C47 IN LINE 61 OF ..\image_information\element_judge.c: 'image': unreferenced parameter
+*** WARNING C47 IN LINE 61 OF ..\image_information\element_judge.c: 'l_line': unreferenced parameter
+*** WARNING C47 IN LINE 61 OF ..\image_information\element_judge.c: 'r_line': unreferenced parameter
+*** WARNING C47 IN LINE 62 OF ..\image_information\element_judge.c: 'l_border': unreferenced parameter
+*** WARNING C47 IN LINE 62 OF ..\image_information\element_judge.c: 'r_border': unreferenced parameter
+  577          
+  578          // 纯整数 出界检测
+  579          void Bound_Lost_Detect(void)
+  580          {
+  581   1         Line_Lost_Flag = 0;
+  582   1          // 1. 左右边线点数过少判定丢线
+  583   1          if(Adaptive_L_Statics < LINE_LOST_MIN_NUM || Adaptive_R_Statics < LINE_LOST_MIN_NUM)
+  584   1          {
+  585   2              Line_Lost_Flag = 1;
+  586   2          }
+  587   1        
+  588   1        if( Adaptive_R_Start_Point[0] - Adaptive_L_Start_Point[0]  <= 20){
+  589   2           Line_Lost_Flag = 1;
+  590   2        }
+  591   1      //    if(Adaptive_R_Start_Point[0] -  Adaptive_L_Start_Point[0] <= 17)
+  592   1      //    {
+  593   1      //        Line_Lost_Flag = 1;
+  594   1      //    }
+  595   1      //  if( Adaptive_Y_Meet >= 40 && ( ( L_Straightaway_Lope_Rate_A == L_Straightaway_Lope_Rate_B && L_Straigh
+             -taway_Lope_Rate_A == L_Straightaway_Lope_Rate_C) ||
+  596   1      //                       ( R_Straightaway_Lope_Rate_A == R_Straightaway_Lope_Rate_B && R_Straightaway_Lop
+             -e_Rate_A == R_Straightaway_Lope_Rate_C ) ) )
+  597   1      //       {
+  598   1      //           Line_Lost_Flag = 1;
+  599   1      //       }
+  600   1          // 连续多帧触发，判定真正出界
+  601   1          if(Line_Lost_Flag)
+  602   1          {
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 11  
+
+  603   2              Out_Bound_Cnt ++;
+  604   2              if(Out_Bound_Cnt >= 3)   // 连续8帧异常=判定出界
+  605   2              {
+  606   3                  Out_Bound_Flag = 1;
+  607   3              }
+  608   2          }
+  609   1          else
+  610   1          {
+  611   2              Out_Bound_Cnt = 0;
+  612   2              Out_Bound_Flag = 0;
+  613   2          }
+  614   1      }
+  615          
+  616          /**
+  617          * 函数功能：      十字路口边线整形处理
+  618          * 特殊说明：      当识别到十字路口时，对左右两侧的拐点进行连线处理
+  619          *                 将两个拐点之间的边线点统一设置为两点x坐标的平均值
+  620          * 形  参：        无
+  621          * 示例：          Cross_Border_Reshape();
+  622          * 返回值：        无
+  623          */
+  624          void Cross_Border_Reshape(void)
+  625          {
+  626   1          uint8 i = 0;
+  627   1          uint8 start_y = 0;
+  628   1          uint8 end_y = 0;
+  629   1          uint8 avg_x = 0;
+  630   1        //  if( !(R_Up_Turn_Right_Point_Flag_1 == 1 && R_Left_Turn_Up_Point_Flag_1 == 1 && L_Up_Turn_Left_Point
+             -_Flag_1 == 1 && L_Right_Turn_Up_Point_Flag_1 == 1) ) return;
+  631   1          // ========== 处理左侧边线 ==========
+  632   1          // 左侧两个拐点：L_Up_Turn_Left_Point_1 和 L_Right_Turn_Up_Point_1
+  633   1          if(L_Up_Turn_Left_Point_Flag_1 == 1 && L_Right_Turn_Up_Point_Flag_1 == 1)
+  634   1          {
+  635   2              // 确定y坐标范围
+  636   2              if(L_Up_Turn_Left_Point_1[1] < L_Right_Turn_Up_Point_1[1])
+  637   2              {
+  638   3                  start_y = L_Up_Turn_Left_Point_1[1];
+  639   3                  end_y = L_Right_Turn_Up_Point_1[1];
+  640   3              }
+  641   2              else
+  642   2              {
+  643   3                  start_y = L_Right_Turn_Up_Point_1[1];
+  644   3                  end_y = L_Up_Turn_Left_Point_1[1];
+  645   3              }
+  646   2              
+  647   2              // 计算x坐标平均值
+  648   2              avg_x = (L_Up_Turn_Left_Point_1[0] + L_Right_Turn_Up_Point_1[0]) / 2;
+  649   2              
+  650   2              // 将两点y值间的所有一维边线点都设置为这个x平均值
+  651   2              for(i = start_y; i <= end_y; i++)
+  652   2              {
+  653   3                  L_Border[i] = avg_x;
+  654   3              }
+  655   2          }
+  656   1          
+  657   1          // ========== 处理右侧边线 ==========
+  658   1          // 右侧两个拐点：R_Up_Turn_Right_Point_1 和 R_Left_Turn_Up_Point_1
+  659   1          if(R_Up_Turn_Right_Point_Flag_1 == 1 && R_Left_Turn_Up_Point_Flag_1 == 1)
+  660   1          {
+  661   2              // 确定y坐标范围
+  662   2              if(R_Up_Turn_Right_Point_1[1] < R_Left_Turn_Up_Point_1[1])
+  663   2              {
+  664   3                  start_y = R_Up_Turn_Right_Point_1[1];
+  665   3                  end_y = R_Left_Turn_Up_Point_1[1];
+  666   3              }
+  667   2              else
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 12  
+
+  668   2              {
+  669   3                  start_y = R_Left_Turn_Up_Point_1[1];
+  670   3                  end_y = R_Up_Turn_Right_Point_1[1];
+  671   3              }
+  672   2              
+  673   2              // 计算x坐标平均值
+  674   2              avg_x = (R_Up_Turn_Right_Point_1[0] + R_Left_Turn_Up_Point_1[0]) / 2;
+  675   2              
+  676   2              // 将两点y值间的所有一维边线点都设置为这个x平均值
+  677   2              for(i = start_y; i <= end_y; i++)
+  678   2              {
+  679   3                  R_Border[i] = avg_x;
+  680   3              }
+  681   2          }
+  682   1      }
+  683          static uint8 shot_debounce = 0;
+  684          //uint8 laser_fired = 0;   // 激光相关，已禁用
+  685          uint8 ring_shot_flag = 0;
+  686          uint8 cnt=0;
+  687          // 1. 将魔法数字提取为宏定义，方便后续根据摄像头和靶子调整
+  688          #define RING_CHECK_ROWS_CNT 16
+  689          #define RING_WIDTH_MIN      2
+  690          #define RING_WIDTH_MAX      25
+  691          #define RING_HEIGHT_MIN     2
+  692          #define RING_HEIGHT_MAX     25
+  693          #define RING_Y_MIN          24
+  694          #define RING_Y_MAX          47
+  695          #define RING_MIN_VALID_CNT  9
+  696          
+  697          // 假设图像高度，请根据实际摄像头分辨率修改
+  698          #define IMAGE_HEIGHT        60
+  699          
+  700          void ring_shot_judge(uint8(*image)[Image_X] , uint8 (*l_line)[2], uint8 (*r_line)[2], uint8 *l_border, ui
+             -nt8 *r_border)
+  701          {
+  702   1          /* -------------------------------------------------------
+  703   1           * C251 规范要求：所有变量定义必须放在函数的最前面
+  704   1           * ------------------------------------------------------- */
+  705   1          // 常量数组建议用 const 修饰，可能会存放在 ROM 中节省 RAM
+  706   1          const uint8 check_rows[RING_CHECK_ROWS_CNT] = {
+  707   1               24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54 };
+  708   1          //};
+  709   1      
+  710   1          uint8 row_idx;
+  711   1          uint8 i;                  // 用于内部循环
+  712   1          uint8 row;                // 当前行号
+  713   1          uint8 width;              // 特征宽度
+  714   1          uint8 ring_height;        // 圆环高度
+  715   1      //    uint8 lamp;               // 灯号逻辑变量
+  716   1      
+  717   1          uint16 shot_center_x_sum = 0; // X坐标累加和 (使用uint16防止溢出)
+  718   1          uint16 shot_center_y_sum = 0; // Y坐标累加和
+  719   1          uint8 find_cnt = 0;       // 有效点数统计
+  720   1      
+  721   1          uint8 first_point;
+  722   1          uint8 end_point;
+  723   1      
+  724   1      //    shot_center_x;     // 最终计算出的中心X
+  725   1      //    shot_center_y;     // 最终计算出的中心Y
+  726   1      
+  727   1          uint8 up_point;
+  728   1          uint8 down_point;
+  729   1          uint8 start_point_up;
+  730   1          uint8 start_point_down;
+  731   1          
+  732   1          uint8 ring_flag = 0;
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 13  
+
+  733   1      
+  734   1          /* -------------------------------------------------------
+  735   1           * 1. 冷却期处理
+  736   1           * ------------------------------------------------------- */
+  737   1          if (shot_CD)
+  738   1          {
+  739   2              // 冷却期间强制关闭所有输出，并直接返回，节省算力
+  740   2      //        gpio_set_level(IO_P67, 0);
+  741   2      //        gpio_set_level(IO_P05, 0);
+  742   2      //        gpio_set_level(IO_PA2, 0);
+  743   2      //        gpio_set_level(IO_PA4, 0);
+  744   2      //        gpio_set_level(IO_PA6, 0);
+  745   2              return;
+  746   2          }
+  747   1      
+  748   1          /* -------------------------------------------------------
+  749   1           * 2. 单次扫描：提取特征并计算初步中心
+  750   1           * ------------------------------------------------------- */
+  751   1          for (row_idx = 0; row_idx < RING_CHECK_ROWS_CNT; row_idx++)
+  752   1          {
+  753   2              row = check_rows[row_idx];
+  754   2              first_point = 0;
+  755   2              end_point = 0;
+  756   2      
+  757   2              // 边框有效性检查
+  758   2              if (l_border[row] > 3 && r_border[row] < 76 && r_border[row] - l_border[row] > 25)
+  759   2              {
+  760   3                  // 寻找边缘突变点
+  761   3                  for (i = l_border[row] + 10; i < r_border[row] - 10; i++)
+  762   3                  {
+  763   4                      if (Compare_Num(image[row][i], image[row][i + 1], 10))
+  764   4                      {
+  765   5                          if (!first_point) first_point = i;
+  766   5                          end_point = i + 2; // 记录结束位置
+  767   5                      }
+  768   4                  }
+  769   3      
+  770   3                  // 验证宽度并累加坐标
+  771   3                  // 注意：如果没找到点，first_point和end_point都是0，width为0，会被下面的
+             -条件过滤掉
+  772   3                  width = end_point - first_point;
+  773   3                  if (width >= RING_WIDTH_MIN && width <= RING_WIDTH_MAX && first_point > 12)
+  774   3                  {
+  775   4                      shot_center_x_sum += (first_point + end_point) / 2;
+  776   4                      shot_center_y_sum += row;
+  777   4                      find_cnt++;
+  778   4                  }
+  779   3              }
+  780   2            }
+  781   1             
+  782   1          /* -------------------------------------------------------
+  783   1           * 3. 计算平均值与防除零保护
+  784   1           * ------------------------------------------------------- */
+  785   1      //  if (find_cnt >= 1 )
+  786   1      //  {
+  787   1      //    t = 90 ;
+  788   1      //  }
+  789   1          if (find_cnt >=  2 )ring_flag = 1;
+  790   1          if(ring_flag)
+  791   1          {
+  792   2       //       buzzer_beep();
+  793   2      //        // 防止除以0导致死机
+  794   2              shot_center_x = (shot_center_x_sum / find_cnt) + 1 ; // +1 可能是为了补偿偏移，保留�
+             -�逻辑
+  795   2              shot_center_y = shot_center_y_sum / find_cnt ;
+  796   2          
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 14  
+
+  797   2              /* -------------------------------------------------------
+  798   2               * 4. 垂直方向寻找圆环上下边界 (带边界保护)
+  799   2               * ------------------------------------------------------- */
+  800   2              up_point = shot_center_y ;
+  801   2              down_point = shot_center_y ;
+  802   2      
+  803   2              // 向上搜索
+  804   2              start_point_up = shot_center_y - 1 ;
+  805   2              
+  806   2              while (start_point_up > 18)
+  807   2              {
+  808   3                  if (Compare_Num(image[start_point_up][shot_center_x],
+  809   3                                  image[start_point_up - 1][shot_center_x], 12))
+  810   3                  {
+  811   4                      up_point = start_point_up;
+  812   4                      break;
+  813   4                  }
+  814   3                  start_point_up--;
+  815   3              }
+  816   2      
+  817   2              // 向下搜索 (注意不要超过图像最大高度)
+  818   2              start_point_down = shot_center_y + 1 ;
+  819   2              
+  820   2              while (start_point_down < IMAGE_HEIGHT - 3)
+  821   2              {
+  822   3                  if (Compare_Num(image[start_point_down][shot_center_x],
+  823   3                                  image[start_point_down + 1][shot_center_x], 12))
+  824   3                  {
+  825   4                      down_point = start_point_down;
+  826   4                      break;
+  827   4                  }
+  828   3                  start_point_down++;
+  829   3              }
+  830   2      
+  831   2      //        
+  832   2              ring_height = down_point - up_point ;
+  833   2      
+  834   2              if (ring_height >= RING_HEIGHT_MIN && ring_height <= RING_HEIGHT_MAX)
+  835   2              {
+  836   3                  ring_shot_flag = 1;
+  837   3                  // 更新更精确的Y中心
+  838   3                  shot_center_y = ( down_point + up_point ) / 2;
+  839   3      
+  840   3                  // 确认Y轴在有效射击区域内
+  841   3                  if ( shot_center_y >= RING_Y_MIN && shot_center_y <= RING_Y_MAX  && !shot_CD)
+  842   3                  {
+  843   4                      // 触发蜂鸣器并进入冷却
+  844   4                      buzzer_beep();
+*** WARNING C140 IN LINE 844 OF ..\image_information\element_judge.c: 'buzzer_beep' undefined; assuming 'extern int buzz
+             -er_beep()'
+  845   4                      shot_CD_flag = 1;
+  846   4                      //shot_CD_cnt = 0; 
+  847   4                      //shot_CD = 15;
+  848   4      
+  849   4                      // 根据X轴坐标确定区域 (1-5)
+  850   4                      lamp = 0;
+  851   4                      if (shot_center_x < 32) lamp = 1;
+  852   4                      else if (shot_center_x < 38) lamp = 2;
+  853   4                      else if (shot_center_x < 44) lamp = 3;
+  854   4                      else if (shot_center_x < 51) lamp = 4;
+  855   4                      else lamp = 5;
+  856   4      
+  857   4                      /* -------------------------------------------------------
+  858   4                       * 6. 执行动作 (仅设置电平，不重复初始化)
+  859   4                       * ------------------------------------------------------- */
+  860   4      #if 0  // laser fire block disabled
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 15  
+
+                               switch (lamp)
+                               {
+                               case 1:
+                                   gpio_init(IO_P76, GPO, 1, GPO_PUSH_PULL);
+                                   gpio_set_level(IO_P76, 1);
+               //                    system_delay_ms(50);
+               //                    gpio_set_level(IO_P76, 0);
+                                   break;
+                               case 2:
+                                   gpio_init(IO_P74, GPO, 1, GPO_PUSH_PULL);
+                                   gpio_set_level(IO_P74, 1);
+               //                    system_delay_ms(50);
+               //                    gpio_set_level(IO_P74, 0);
+                                   break;
+                               case 3:                   
+                                   gpio_init(IO_P77, GPO, 1, GPO_PUSH_PULL);
+                                   gpio_set_level(IO_P77, 1);
+               //                    system_delay_ms(50);
+               //                    gpio_set_level(IO_P77, 0);
+                                   break;
+                               case 4:
+                                   gpio_init(IO_P75, GPO, 1, GPO_PUSH_PULL);
+                                   gpio_set_level(IO_P75, 1);
+               //                    system_delay_ms(50);
+               //                    gpio_set_level(IO_P75, 0);
+                                   break;
+                               case 5:
+                                   gpio_init(IO_P67, GPO, 1, GPO_PUSH_PULL);
+                                   gpio_set_level(IO_P67, 1);
+               //                    system_delay_ms(50);
+               //                    gpio_set_level(IO_P67, 0);
+                                   break;
+                               default:
+                                   break;
+                               }
+               #endif  // laser fire block disabled
+  897   4                  }
+  898   3              }
+  899   2          //if(photo_flag == 0)
+  900   2            if(1)
+  901   2            {
+  902   3      //        tft180_show_string(0,64, "center_x:");      
+  903   3      //      tft180_show_int16(64, 64, shot_center_x);
+  904   3      //        tft180_show_string(0,80, "center_y:");      
+  905   3      //      tft180_show_int16(64, 80, shot_center_y);
+  906   3      //        tft180_show_string(0,96, "lamp:");      
+  907   3      //      tft180_show_int16(64, 96, lamp);
+  908   3              //tft180_show_int16(0, 0, 2);
+  909   3            }
+  910   2              }
+  911   1          else
+  912   1          {
+  913   2              ring_shot_flag = 0;
+  914   2          }
+  915   1      }
+*** WARNING C47 IN LINE 700 OF ..\image_information\element_judge.c: 'l_line': unreferenced parameter
+*** WARNING C47 IN LINE 700 OF ..\image_information\element_judge.c: 'r_line': unreferenced parameter
+  916          
+  917          void draw_target_center(void)
+  918          {
+  919   1          int8 i;
+  920   1      
+  921   1          if (!ring_shot_flag)  return;
+  922   1      
+  923   1          for (i = -5; i <= 5; i++)
+  924   1          {
+C251 COMPILER V5.60.0,  element_judge                                                      12/09/26  19:11:26  PAGE 16  
+
+  925   2              tft180_draw_point(shot_center_x + i, shot_center_y, RGB565_RED);
+  926   2          }
+  927   1      
+  928   1          for (i = -5; i <= 5; i++)
+  929   1          {
+  930   2              tft180_draw_point(shot_center_x, shot_center_y + i, RGB565_RED);
+  931   2          }
+  932   1      }
+  933          
+  934            
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      6167     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       129     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       228     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  8 WARNING(S),  0 ERROR(S)

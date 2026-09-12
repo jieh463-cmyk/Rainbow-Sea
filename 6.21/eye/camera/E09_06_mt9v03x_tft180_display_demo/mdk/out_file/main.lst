@@ -1,0 +1,373 @@
+C251 COMPILER V5.60.0,  main                                                               12/09/26  19:11:25  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE main
+OBJECT MODULE PLACED IN .\out_file\main.obj
+COMPILER INVOKED BY: E:\keilC251\C251\BIN\C251.EXE ..\user\main.c LARGE FLOAT64 ROM(HUGE) WARNINGLEVEL(3) OPTIMIZE(0,SIZ
+                    -E) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_dr
+                    -iver;..\user;..\code;..\..\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assistant;..\im
+                    -g_process;..\find_line;..\image_information;..\speed_control;..\element_process) DEBUG PRINT(.\out_file\main.lst) TABS(2
+                    -) OBJECT(.\out_file\main.obj) 
+
+stmt  level    source
+
+    1          #include "file_h_all.h"
+    2          //
+    3          #define WIFI_SSID_TEST          "null"
+    4          #define WIFI_PASSWORD_TEST      "00000000"
+    5          
+    6          #define low_speed 130
+    7          #define high_speed low_speed+20
+    8          
+    9          #define BOUNDARY_NUM            (Image_Y * 3 / 2)
+   10          
+   11          uint8 xy_x1_boundary[BOUNDARY_NUM], xy_x2_boundary[BOUNDARY_NUM], xy_x3_boundary[BOUNDARY_NUM];
+   12          uint8 xy_y1_boundary[BOUNDARY_NUM], xy_y2_boundary[BOUNDARY_NUM], xy_y3_boundary[BOUNDARY_NUM];
+   13          uint8 x1_boundary[MT9V03X_H], x2_boundary[MT9V03X_H], x3_boundary[MT9V03X_H];
+   14          uint8 y1_boundary[MT9V03X_W], y2_boundary[MT9V03X_W], y3_boundary[MT9V03X_W];
+   15          uint8 image_copy[Image_Y][Image_X];
+   16          
+   17          uint8 j = 0;
+   18          uint8 i_photo_send = 0;
+   19          
+   20          uint8 Adaptive_L_Start_Point[2] = { 0 };
+   21          uint8 Adaptive_R_Start_Point[2] = { 0 };
+   22          uint8 Adaptive_L_Line[(uint8)160][2] = {{0}};
+   23          uint8 Adaptive_R_Line[(uint8)160][2] = {{0}};
+   24          int8 Adaptive_L_Grow_Dir[(uint8)160] = {0};
+   25          int8 Adaptive_R_Grow_Dir[(uint8)160] = {0};
+   26          uint16 Adaptive_L_Statics = 0;
+   27          uint16 Adaptive_R_Statics = 0;
+   28          
+   29          uint8 Adaptive_X_Meet = 0;
+   30          uint8 Adaptive_Y_Meet = 0;
+   31          
+   32          uint8 R_Border[Image_Y] = {0};
+   33          uint8 L_Border[Image_Y] = {0};
+   34          uint8 R_Unilateral_Patrol_Border[Image_Y] = {0};
+   35          uint8 L_Unilateral_Patrol_Border[Image_Y] = {0};
+   36          
+   37          int16 Image_Count = 0;
+   38          uint8 Image_Count_Flag = 0;
+   39          uint8 Element_State = 0;
+   40          
+   41          uint8 time_flag=0;
+   42          uint8 photo_flag=0;
+   43          int32 time_ms=0;
+   44          int32 photo_cnt=0 ;
+   45          
+   46          volatile uint8 buzzer_flag = 0;
+   47          volatile uint16 buzzer_count = 0;
+   48          
+   49          float Z_Yaw = 0;
+   50          uint8 IMU_JF_Flag = 0;
+   51          uint8 imu_flag=0;
+   52          
+   53           char buf[32];
+   54                  int len;
+   55               int s=0;
+C251 COMPILER V5.60.0,  main                                                               12/09/26  19:11:25  PAGE 2   
+
+   56          
+   57          #if 0  // ↓↓↓ 激光相关代码已禁用（全程周期性激光发射方案）
+               // ============================================================
+               // ★ 全程周期性激光发射方案（注释待启用）
+               // 思路：不依赖靶子识别，激光全程按固定间隔自动脉冲
+               //      车正常巡线跑过靶子，脉冲命中哪个是哪个
+               // PIT 基准: 10ms/拍 (TIM0_PIT @ 100Hz)
+               // 间隔 100ms(10拍), 脉宽 20ms(2拍), 占空比 ~17%
+               // 车速 ~2m/s 时，靶子区域 40cm 通过时间 ~200ms
+               // → 每个靶子经过时至少命中 1~2 次
+               // ============================================================
+                #define LASER_PERIODIC_INTERVAL  10   // 发射间隔: 10拍 = 100ms
+                #define LASER_PERIODIC_DURATION   2   // 脉冲宽度:  2拍 =  20ms
+               
+                static uint8 laser_periodic_timer = 0;    // 脉冲定时器 (10ms/拍)
+                static uint8 laser_periodic_on    = 0;    // 1=激光正在发射中
+               
+                void laser_periodic_handler(void)
+                {
+                    if (laser_periodic_timer > 0)
+                    {
+                        laser_periodic_timer--;
+                    }
+               
+                    if (laser_periodic_timer == 0)
+                    {
+                        if (laser_periodic_on)
+                        {
+                            // --- 脉冲结束，关闭激光 ---
+                            gpio_set_level(IO_P67, 0);
+                            gpio_set_level(IO_P76, 0);
+                            gpio_set_level(IO_P74, 0);
+                            gpio_set_level(IO_P77, 0);
+                            gpio_set_level(IO_P75, 0);
+                            laser_periodic_on    = 0;
+                            laser_periodic_timer = LASER_PERIODIC_INTERVAL;   // 下一轮间隔
+                        }
+                        else
+                        {
+                            // --- 开始新脉冲，打开激光 ---
+                            gpio_set_level(IO_P67, 1);
+                            gpio_set_level(IO_P76, 1);
+                            //gpio_set_level(IO_P74, 1);
+                            gpio_set_level(IO_P77, 1);
+                           // gpio_set_level(IO_P75, 1);
+                            laser_periodic_on    = 1;
+                            laser_periodic_timer = LASER_PERIODIC_DURATION;   // 脉冲保持
+                        }
+                    }
+                }
+               // ============================================================
+               #endif  // ↑↑↑ 激光相关代码已禁用
+  108          
+  109          void buzzer_pit_handler(void)
+  110          {
+  111   1          if(buzzer_flag && buzzer_count)
+  112   1          {
+  113   2              buzzer_count--;
+  114   2              if(buzzer_count == 0)
+  115   2              {
+  116   3                  buzzer_flag = 0;
+  117   3                  gpio_set_level(IO_P65, 0);
+  118   3              }
+  119   2          }
+  120   1        if(shot_CD != 0){
+  121   2          shot_CD-- ;
+C251 COMPILER V5.60.0,  main                                                               12/09/26  19:11:25  PAGE 3   
+
+  122   2        }
+  123   1        if(time_flag){ time_ms += 1;}
+  124   1      
+  125   1      //  laser_periodic_handler();   // ★ 周期性激光脉冲（已禁用）
+  126   1      }
+  127          
+  128          void buzzer_beep(void)
+  129          {
+  130   1          buzzer_flag = 1;
+  131   1          buzzer_count = 2;
+  132   1          gpio_set_level(IO_P65, 1);
+  133   1      }
+  134          
+  135          void main(void)
+  136          {
+  137   1      
+  138   1          clock_init(SYSTEM_CLOCK_96M);
+  139   1          debug_init();
+  140   1      
+  141   1        pit_ms_init(TIM0_PIT, 100, buzzer_pit_handler);
+  142   1        gpio_init(IO_P65, GPO, 0, GPO_PUSH_PULL);
+  143   1        buzzer_beep();
+  144   1      
+  145   1        tft180_init();
+  146   1        tft180_set_dir(TFT180_PORTAIT);
+  147   1        
+  148   1        iap_init();
+  149   1        iap_read_buff(0x00, (uint8*)flash_buff, sizeof(flash_buff));
+  150   1        button_init();
+  151   1        servo_init();
+  152   1        motor_init();
+  153   1        motor1_pid_init();
+  154   1        motor2_pid_init();
+  155   1        servo_ppd_init();
+  156   1        encoder_init();
+  157   1        up_pid1_init();
+  158   1        up_pid2_init();
+  159   1      //  gpio_init(IO_P67, GPO, 0, GPO_PUSH_PULL);   // ★ 周期性激光: P67 推挽输出（已禁用）
+  160   1      //  gpio_init(IO_P76, GPO, 0, GPO_PUSH_PULL);
+  161   1      //  gpio_init(IO_P74, GPO, 0, GPO_PUSH_PULL);
+  162   1      //  gpio_init(IO_P75, GPO, 0, GPO_PUSH_PULL);
+  163   1      //  gpio_init(IO_P77, GPO, 0, GPO_PUSH_PULL);
+  164   1        while(1)
+  165   1        {
+  166   2          if(imu660ra_init())
+  167   2          {
+  168   3            tft180_show_string(0, 0, "imu reinit.");
+  169   3          }
+  170   2          else break;
+  171   2        }
+  172   1      
+  173   1          imu_flag = 1;
+  174   1        servo_control(servo_motor_duty);
+  175   1      //  pwm_set_duty(725);
+  176   1      //  while(1);
+  177   1         while(1)
+  178   1         {
+  179   2             if(mt9v03x_init()){}
+  180   2             else break;
+  181   2         }
+  182   1         //tft180_show_int32(0, 100, 0, 1);
+  183   1          system_delay_ms(500);
+  184   1      
+  185   1            t=low_speed;
+  186   1          time_flag=1;
+  187   1          photo_flag=1;
+C251 COMPILER V5.60.0,  main                                                               12/09/26  19:11:25  PAGE 4   
+
+  188   1      
+  189   1           while(1)
+  190   1            {
+  191   2      
+  192   2              int16 left_edge, right_edge;
+  193   2                uint8 last_element;
+  194   2              static uint8 stable_element = 0;
+  195   2              static uint8 elem_candidate = 0;
+  196   2              static uint8 elem_debounce = 0;
+  197   2      
+  198   2              if(mt9v03x_finish_flag)
+  199   2              {
+  200   3                L_Boundary_Limit = (L_Up_Turn_Left_Point_Flag_1 == 1 && R_Up_Turn_Right_Point_Flag_1 == 0 && R_Strai
+             -ght_Flag == 1) ? 65 : 48;
+  201   3                R_Boundary_Limit = (R_Up_Turn_Right_Point_Flag_1 == 1 && L_Up_Turn_Left_Point_Flag_1 == 0 && L_Strai
+             -ght_Flag == 1) ? 65 : 48;
+  202   3      
+  203   3                Process_Image();
+  204   3      
+  205   3            Get_Information();
+  206   3            Element = Element_Judgement(Find_Line_Image, Adaptive_L_Statics, Adaptive_R_Statics, Adaptive_L_Grow_D
+             -ir, Adaptive_R_Grow_Dir, Adaptive_L_Line, Adaptive_R_Line, Adaptive_X_Meet, Adaptive_Y_Meet, L_Border, R_Border);
+  207   3            tft180_show_int32(50, 64, Element,8);
+  208   3            if (Element != elem_candidate) {
+  209   4                elem_candidate = Element;
+  210   4                elem_debounce = 0;
+  211   4            } else {
+  212   4                elem_debounce++;
+  213   4                if (elem_debounce >= 3) {     // ����3֡һ�²��л�
+  214   5                    stable_element = elem_candidate;
+  215   5                }
+  216   4            }
+  217   3      //        tft180_show_int32(0, 100, L_Straight_Flag, 3);
+  218   3      //      tft180_show_int32(30, 100,  R_Straight_Flag, 3);
+  219   3      //      tft180_show_int32(60, 100,  Adaptive_Y_Meet, 1);
+  220   3      //      tft180_show_int32(90, 100,  Adaptive_X_Meet, 1);
+  221   3      
+  222   3          switch(stable_element){
+  223   4            case 2: //  Straightaway
+  224   4            {
+  225   5                Get_Middle_Line(L_Border , R_Border , C_Line , Image_Y - 3 , 0);
+  226   5              Get_Straight_Deviation_Value(2, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
+  227   5      
+  228   5              {
+  229   6                  uint8 far_row   = Adaptive_Y_Meet + 3;
+  230   6                  int16 far_width  = (int16)R_Border[far_row] - (int16)L_Border[far_row];
+  231   6                  int16 near_width = (int16)R_Border[50] - (int16)L_Border[50];
+  232   6      
+  233   6                  if(far_width < near_width * 3 / 4)
+  234   6                      t = low_speed - 15;
+  235   6                  else if(far_width < near_width * 7 / 8)
+  236   6                      t = low_speed;
+  237   6                  else if(My_ABS(Deviation_Value) >= 15)
+  238   6                      t = low_speed - 18;
+  239   6                  else
+  240   6                      t = high_speed - 17;
+  241   6              }
+  242   5      
+  243   5              ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line, L_Border, R_Border);
+  244   5              speed_control();
+  245   5              break;
+  246   5      
+  247   5            }
+  248   4            case 3: //   L_Turn
+  249   4            {
+  250   5              if(My_ABS(Deviation_Value) >= 35)
+C251 COMPILER V5.60.0,  main                                                               12/09/26  19:11:25  PAGE 5   
+
+  251   5                t = low_speed - 18;
+  252   5              else if(My_ABS(Deviation_Value) >= 20)
+  253   5                t = low_speed - 13;
+  254   5              else
+  255   5                t = low_speed - 10;
+  256   5              Get_Middle_Line(L_Border , R_Border , C_Line , Image_Y - 3 , 0);
+  257   5              Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
+  258   5      
+  259   5              ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line , L_Border , R_Border);
+  260   5      
+  261   5            speed_control();
+  262   5      
+  263   5              break;
+  264   5            }
+  265   4            case 4: //   R_Turn
+  266   4            {
+  267   5              if(My_ABS(Deviation_Value) >= 35)
+  268   5                t = low_speed - 18;
+  269   5              else if(My_ABS(Deviation_Value) >= 20)
+  270   5                t = low_speed - 13;
+  271   5              else
+  272   5                t = low_speed - 10;
+  273   5              Get_Middle_Line(L_Border , R_Border , C_Line , Image_Y - 3 , 0);
+  274   5              Get_Straight_Deviation_Value(0, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
+  275   5      
+  276   5              ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line , L_Border , R_Border);
+  277   5      
+  278   5              speed_control();
+  279   5      
+  280   5              break;
+  281   5            }
+  282   4            case 5: //   L_Circle
+  283   4            {
+  284   5              t=low_speed - 25;
+  285   5              L_Circle_Process( );
+  286   5              break;
+  287   5            }
+  288   4            case 6: //   R_Circle
+  289   4            {
+  290   5              t=low_speed - 25;
+  291   5              L_Boundary_Limit = 35; R_Boundary_Limit = 35;
+  292   5              R_Circle_Process( );
+  293   5              break;
+  294   5            }
+  295   4            case 18: //   Small_s
+  296   4            {;
+  297   5            }
+  298   4            default :
+  299   4              t = low_speed - 18;
+  300   4              Get_Middle_Line(L_Border , R_Border , C_Line , Image_Y - 3 , 0);
+  301   4              Get_Straight_Deviation_Value(last_element, Adaptive_Y_Meet, Image_Y - 3, C_Line, 0);
+  302   4              ring_shot_judge(Find_Line_Image, Adaptive_L_Line, Adaptive_R_Line , L_Border , R_Border);
+  303   4              speed_control();
+  304   4          }
+  305   3          last_element = Element;
+  306   3      
+  307   3            tft180_show_gray_image(0, 0,
+  308   3              (const uint8 *)Find_Line_Image,
+  309   3                    Image_X,
+  310   3                    Image_Y,
+  311   3                     80,
+  312   3                     60,
+  313   3                     0);
+  314   3            Draw_Border_Points_1(Adaptive_L_Line, Adaptive_R_Line, C_Line , Adaptive_L_Statics, Adaptive_R_Statics
+             -);
+  315   3      //      draw_target_center();
+C251 COMPILER V5.60.0,  main                                                               12/09/26  19:11:25  PAGE 6   
+
+  316   3                  mt9v03x_finish_flag = 0;
+  317   3              }
+  318   2      
+  319   2          }
+  320   1      }
+*** WARNING C47 IN LINE 192 OF ..\user\main.c: 'left_edge': unreferenced local variable
+*** WARNING C47 IN LINE 192 OF ..\user\main.c: 'right_edge': unreferenced local variable
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      1986     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =      7544     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =      1414     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  2 WARNING(S),  0 ERROR(S)

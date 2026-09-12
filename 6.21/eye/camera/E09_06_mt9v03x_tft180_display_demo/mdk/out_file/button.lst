@@ -1,0 +1,372 @@
+C251 COMPILER V5.60.0,  button                                                             12/09/26  19:11:27  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE button
+OBJECT MODULE PLACED IN .\out_file\button.obj
+COMPILER INVOKED BY: E:\keilC251\C251\BIN\C251.EXE ..\speed_control\button.c LARGE FLOAT64 ROM(HUGE) WARNINGLEVEL(3) OPT
+                    -IMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libr
+                    -aries\zf_driver;..\user;..\code;..\..\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assi
+                    -stant;..\img_process;..\find_line;..\image_information;..\speed_control;..\element_process) DEBUG PRINT(.\out_file\butto
+                    -n.lst) TABS(2) OBJECT(.\out_file\button.obj) 
+
+stmt  level    source
+
+    1          #include "file_h_all.h"
+    2          
+    3          // ���尴������
+    4          #define KEY1_PIN        IO_PB2
+    5          #define KEY2_PIN        IO_PB3
+    6          #define KEY3_PIN        IO_PB4
+    7          #define KEY4_PIN        IO_P32
+    8          
+    9          #define SWITCH1_PIN     IO_PB0
+   10          #define SWITCH2_PIN     IO_PB1
+   11          
+   12          // ����״̬����
+   13          uint8 key1_status;
+   14          uint8 key2_status;
+   15          uint8 key3_status;
+   16          uint8 key4_status;
+   17          
+   18          // ��һ�ο���״̬����
+   19          uint8 key1_last_status=1;
+   20          uint8 key2_last_status=1;
+   21          uint8 key3_last_status=1;
+   22          uint8 key4_last_status=1;
+   23          
+   24          // ���ر�־λ
+   25          uint8 key1_flag;
+   26          uint8 key2_flag;
+   27          uint8 key3_flag;
+   28          uint8 key4_flag;
+   29          
+   30          uint8 test1=0,test2=0,test3=0,test4=0;
+   31          int16 t;
+   32          
+   33          
+   34          void button_init(void)
+   35          {
+   36   1        gpio_init(KEY1_PIN, GPI, 1, GPI_PULL_UP);
+   37   1        gpio_init(KEY2_PIN, GPI, 1, GPI_PULL_UP);
+   38   1        gpio_init(KEY3_PIN, GPI, 1, GPI_PULL_UP);
+   39   1        gpio_init(KEY4_PIN, GPI, 1, GPI_PULL_UP);
+   40   1      
+   41   1          gpio_init(SWITCH1_PIN, GPI, 1, GPI_PULL_UP);
+   42   1          gpio_init(SWITCH2_PIN, GPI, 1, GPI_PULL_UP);
+   43   1      
+   44   1      }
+   45          
+   46          void button_control(void)
+   47          {
+   48   1                                
+   49   1          // ��ȡ��ǰ����״̬
+   50   1              key1_status = gpio_get_level(KEY1_PIN);
+   51   1              key2_status = gpio_get_level(KEY2_PIN);
+   52   1              key3_status = gpio_get_level(KEY3_PIN);
+   53   1              key4_status = gpio_get_level(KEY4_PIN);
+   54   1              
+   55   1              if(key1_status && !key1_last_status)    key1_flag = 1;
+C251 COMPILER V5.60.0,  button                                                             12/09/26  19:11:27  PAGE 2   
+
+   56   1              if(key2_status && !key2_last_status)    key2_flag = 1;
+   57   1              if(key3_status && !key3_last_status)    key3_flag = 1;
+   58   1              if(key4_status && !key4_last_status)    key4_flag = 1;
+   59   1              
+   60   1              if(key1_flag)   
+   61   1              {
+   62   2                
+   63   2                  key1_flag = 0;
+   64   2                  test1++;
+   65   2                  test1=test1%5;
+   66   2                  test2=0;
+   67   2                  tft180_clear(tft180_bgcolor);
+   68   2                down_buff[0]=motor1_pid.Kp;
+   69   2                down_buff[1]=motor1_pid.Ki;
+   70   2                down_buff[2]=motor2_pid.Kp;
+   71   2                down_buff[3]=motor2_pid.Ki;
+   72   2                down_buff[4]=servo_pid.Kp1;
+   73   2                down_buff[5]=servo_pid.Kd1;
+   74   2                down_buff[6]=servo_pid.Kd2;
+   75   2                down_buff[7]=t;
+   76   2                down_buff[8]=servo_pid.Kp2;
+   77   2                down_buff[9]=0;
+   78   2                 iap_erase_page(0); 
+   79   2                iap_write_buff(0x00, (uint8*)down_buff, sizeof(down_buff));
+   80   2              }
+   81   1              
+   82   1              if(key2_flag)   
+   83   1              {
+   84   2                  key2_flag = 0;  //�
+   85   2                 test2++;
+   86   2                if(test1==0)
+   87   2                 {
+   88   3                    test2=test2%4;
+   89   3                 }
+   90   2                 else if(test1==1)
+   91   2                 {
+   92   3                    test2=test2%4;
+   93   3                 }
+   94   2                 else if(test1==2)
+   95   2                 {
+   96   3                    test2=test2%4;
+   97   3                 }
+   98   2              }
+   99   1              
+  100   1              if(key3_flag)   
+  101   1              {
+  102   2                  key3_flag = 0;
+  103   2                  if(test1 == 0 )
+  104   2                  {
+  105   3                      switch(test2)
+  106   3                      {
+  107   4                          case 0: motor1_pid.Kp += 1; break;
+  108   4                          case 1: motor1_pid.Ki += 1; break;
+  109   4                          case 2: motor1_pid.Kd += 1; break;
+  110   4                          case 3: t += 10; break;
+  111   4      
+  112   4                      }
+  113   3                  }
+  114   2            else if( test1 == 1)
+  115   2                  {
+  116   3                      switch(test2)
+  117   3                      {
+  118   4                          case 0: motor2_pid.Kp += 1; break;
+  119   4                          case 1: motor2_pid.Ki += 1; break;
+  120   4                          case 2: motor2_pid.Kd += 1; break;
+  121   4                          case 3: t += 10; break;
+C251 COMPILER V5.60.0,  button                                                             12/09/26  19:11:27  PAGE 3   
+
+  122   4      
+  123   4                      }
+  124   3                  }
+  125   2                  else if(test1 == 2)
+  126   2                  {
+  127   3                      switch(test2)
+  128   3                      {
+  129   4                          case 0: servo_pid.Kp1 += 5; break;
+  130   4                          case 1: servo_pid.Kd1 += 5; break;
+  131   4                          case 2: servo_pid.Kd2 += 5; break;
+  132   4                          case 3: servo_pid.Kp2 += 5; break;
+  133   4                      }
+  134   3                  }
+  135   2              }
+  136   1              
+  137   1              if(key4_flag)   
+  138   1              {
+  139   2                  key4_flag = 0;
+  140   2                  if(test1 == 0 )
+  141   2                  {
+  142   3                      switch(test2)
+  143   3                      {
+  144   4                          case 0: motor1_pid.Kp -= 1; break;
+  145   4                          case 1: motor1_pid.Ki -= 1; break;
+  146   4                          case 2: motor1_pid.Kd -= 1; break;
+  147   4                          case 3: t -= 10; break;
+  148   4                         
+  149   4                      }
+  150   3                  }
+  151   2                  else if( test1 == 1)
+  152   2                  {
+  153   3                      switch(test2)
+  154   3                      {
+  155   4                          case 0: motor2_pid.Kp -= 1; break;
+  156   4                          case 1: motor2_pid.Ki -= 1; break;
+  157   4                          case 2: motor2_pid.Kd -= 1; break;
+  158   4                          case 3: t -= 10; break;
+  159   4                      }
+  160   3                  }
+  161   2                  else if(test1 == 2)
+  162   2                  {
+  163   3                      switch(test2)
+  164   3                      {
+  165   4                          case 0: servo_pid.Kp1 -= 1; break;
+  166   4                          case 1: servo_pid.Kd1 -= 1; break;
+  167   4                          case 2: servo_pid.Kd2 -= 1; break;
+  168   4                          case 3: servo_pid.Kp2 -= 1; break;
+  169   4                      }
+  170   3                  }
+  171   2              }
+  172   1            key1_last_status = key1_status;
+  173   1              key2_last_status = key2_status;
+  174   1              key3_last_status = key3_status;
+  175   1              key4_last_status = key4_status;
+  176   1              
+  177   1      }
+  178          
+  179          void tft180_show(void)
+  180          {
+  181   1              if(test1==0)
+  182   1              {
+  183   2                if(test2==0)
+  184   2                {
+  185   3                  tft180_show_string(0 , 0*16, "->p:");   tft180_show_int16(11*6, 0*16, motor1_pid.Kp);
+  186   3                }
+  187   2                else 
+C251 COMPILER V5.60.0,  button                                                             12/09/26  19:11:27  PAGE 4   
+
+  188   2                {
+  189   3                  tft180_show_string(0 , 0*16, "  p:");   tft180_show_int16(11*6, 0*16, motor1_pid.Kp);
+  190   3                }
+  191   2                if(test2==1)
+  192   2                {
+  193   3                  tft180_show_string(0 , 1*16, "->i:");   tft180_show_int16(11*6, 1*16, motor1_pid.Ki);
+  194   3                }
+  195   2                else 
+  196   2                {
+  197   3                  tft180_show_string(0 , 1*16, "  i:");   tft180_show_int16(11*6, 1*16, motor1_pid.Ki);
+  198   3                }
+  199   2                if(test2==2)
+  200   2                {
+  201   3                  tft180_show_string(0 , 2*16, "->d:");   tft180_show_int16(11*6, 2*16, motor1_pid.Kd);
+  202   3                }
+  203   2                else 
+  204   2                {
+  205   3                  tft180_show_string(0 , 2*16, "  d:");   tft180_show_int16(11*6, 2*16, motor1_pid.Kd);
+  206   3                }
+  207   2                if(test2==3)
+  208   2                {
+  209   3                  tft180_show_string(0 , 3*16, "->t:");   tft180_show_int16(11*6, 3*16, motor1_pid.Target);
+  210   3                }
+  211   2                else 
+  212   2                {
+  213   3                  tft180_show_string(0 , 3*16, "  t:");   tft180_show_int16(11*6, 3*16, motor1_pid.Target);
+  214   3                }
+  215   2                if(test2==4)
+  216   2                {
+  217   3                  tft180_show_string(0 , 4*16, "->en1:");   tft180_show_int16(11*6, 4*16, encoder_data_dir_1);
+  218   3                }
+  219   2                else 
+  220   2                {
+  221   3                  tft180_show_string(0 , 4*16, "  en1:");   tft180_show_int16(11*6, 4*16, encoder_data_dir_1);
+  222   3                }
+  223   2                if(test2==5)
+  224   2                {
+  225   3                  tft180_show_string(0 , 5*16, "->motor1");   tft180_show_int16(11*6, 5*16, motor1_duty);
+  226   3                }
+  227   2                else 
+  228   2                {
+  229   3                  tft180_show_string(0 , 5*16, "  motor1");   tft180_show_int16(11*6, 5*16, motor1_duty);
+  230   3                }
+  231   2                
+  232   2                tft180_show_string(0 , 7*16, "  straight:r ");
+  233   2              }
+  234   1              else if(test1==1)
+  235   1              {
+  236   2                if(test2==0)
+  237   2                {
+  238   3                  tft180_show_string(0 , 0*16, "->p:");   tft180_show_int16(11*6, 0*16, motor2_pid.Kp);
+  239   3                }
+  240   2                else 
+  241   2                {
+  242   3                  tft180_show_string(0 , 0*16, "  p:");   tft180_show_int16(11*6, 0*16, motor2_pid.Kp);
+  243   3                }
+  244   2                if(test2==1)
+  245   2                {
+  246   3                  tft180_show_string(0 , 1*16, "->i:");   tft180_show_int16(11*6, 1*16, motor2_pid.Ki);
+  247   3                }
+  248   2                else 
+  249   2                {
+  250   3                  tft180_show_string(0 , 1*16, "  i:");   tft180_show_int16(11*6, 1*16, motor2_pid.Ki);
+  251   3                }
+  252   2                if(test2==2)
+  253   2                {
+C251 COMPILER V5.60.0,  button                                                             12/09/26  19:11:27  PAGE 5   
+
+  254   3                  tft180_show_string(0 , 2*16, "->d:");   tft180_show_int16(11*6, 2*16, motor2_pid.Kd);
+  255   3                }
+  256   2                else 
+  257   2                {
+  258   3                  tft180_show_string(0 , 2*16, "  d:");   tft180_show_int16(11*6, 2*16, motor2_pid.Kd);
+  259   3                }
+  260   2                if(test2==3)
+  261   2                {
+  262   3                  tft180_show_string(0 , 3*16, "->t:");   tft180_show_int16(11*6, 3*16, motor2_pid.Target);
+  263   3                }
+  264   2                else 
+  265   2                {
+  266   3                  tft180_show_string(0 , 3*16, "  t:");   tft180_show_int16(11*6, 3*16, motor2_pid.Target);
+  267   3                }
+  268   2                if(test2==4)
+  269   2                {
+  270   3                  tft180_show_string(0 , 4*16, "->en1:");   tft180_show_int16(11*6, 4*16, encoder_data_dir_2);
+  271   3                }
+  272   2                else 
+  273   2                {
+  274   3                  tft180_show_string(0 , 4*16, "  en1:");   tft180_show_int16(11*6, 4*16, encoder_data_dir_2);
+  275   3                }
+  276   2                if(test2==5)
+  277   2                {
+  278   3                  tft180_show_string(0 , 5*16, "->motor1");   tft180_show_int16(11*6, 5*16, motor2_duty);
+  279   3                }
+  280   2                else 
+  281   2                {
+  282   3                  tft180_show_string(0 , 5*16, "  motor1");   tft180_show_int16(11*6, 5*16, motor2_duty);
+  283   3                }
+  284   2                
+  285   2                tft180_show_string(0 , 7*16, "  straight:l ");
+  286   2              }
+  287   1              else if(test1==2)
+  288   1              {
+  289   2                if(test2==0)
+  290   2                {
+  291   3                  tft180_show_string(0 , 0*16, "->p1:");   tft180_show_float(11*6, 0*16, servo_pid.Kp1,2,0);
+  292   3                }
+  293   2                else 
+  294   2                {
+  295   3                  tft180_show_string(0 , 0*16, "  p1:");   tft180_show_float(11*6, 0*16, servo_pid.Kp1,2,0);
+  296   3                }
+  297   2                if(test2==1)
+  298   2                {
+  299   3                  tft180_show_string(0 , 1*16, "->d1:");   tft180_show_int16(11*6, 1*16, servo_pid.Kd1);
+  300   3                }
+  301   2                else 
+  302   2                {
+  303   3                  tft180_show_string(0 , 1*16, "  d1:");   tft180_show_int16(11*6, 1*16, servo_pid.Kd1);
+  304   3                }
+  305   2                if(test2==2)
+  306   2                {
+  307   3                  tft180_show_string(0 , 2*16, "->d:");   tft180_show_int16(11*6, 2*16, servo_pid.Kd2);
+  308   3                }
+  309   2                else 
+  310   2                {
+  311   3                  tft180_show_string(0 , 2*16, "  d:");   tft180_show_int16(11*6, 2*16, servo_pid.Kd2);
+  312   3                }
+  313   2                if(test2==3)
+  314   2                {
+  315   3                  tft180_show_string(0 , 3*16, "->p2:");   tft180_show_int16(11*6, 3*16, servo_pid.Kp2);
+  316   3                }
+  317   2                else 
+  318   2                {
+  319   3                  tft180_show_string(0 , 3*16, "  p2:");   tft180_show_int16(11*6, 3*16, servo_pid.Kp2);
+C251 COMPILER V5.60.0,  button                                                             12/09/26  19:11:27  PAGE 6   
+
+  320   3                }
+  321   2                
+  322   2                tft180_show_string(0 , 7*16, "   angle ");
+  323   2                
+  324   2              }
+  325   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =      2710     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        18     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       194     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

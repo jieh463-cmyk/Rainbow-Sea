@@ -1,0 +1,1403 @@
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE find_line
+OBJECT MODULE PLACED IN .\out_file\find_line.obj
+COMPILER INVOKED BY: E:\keilC251\C251\BIN\C251.EXE ..\find_line\find_line.c LARGE FLOAT64 ROM(HUGE) WARNINGLEVEL(3) OPTI
+                    -MIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libra
+                    -ries\zf_driver;..\user;..\code;..\..\libraries\zf_components\stc32g_usb_lib;..\..\libraries\zf_components\seekfree_assis
+                    -tant;..\img_process;..\find_line;..\image_information;..\speed_control;..\element_process) DEBUG PRINT(.\out_file\find_l
+                    -ine.lst) TABS(2) OBJECT(.\out_file\find_line.obj) 
+
+stmt  level    source
+
+    1          #include "file_h_all.h"
+    2          //**************�������****************
+    3          //��¼����ʱ��Ҫ��ÿ�������Ϊ��һ���֣����ڼ򻯺��
+             -���㷨�����������ķ�����ʱ��    ˳ʱ�룩
+    4          //3  2  1               1  2  3
+    5          //4     0               0     4
+    6          //5  6  7               7  6  5
+    7          /////////////////////////////////
+    8          //{-1,-1},{0,-1},{+1,-1},
+    9          //{-1, 0},       {+1, 0},
+   10          //{-1,+1},{0,+1},{+1,+1},
+   11          //�Թ�ȱ�����޷��������һ���𲽼�¼���򣬵�������
+             -���޷Ǿ������ϰ˸��㣬�������ĵ��ֵ�̶����������Թ��㷨�
+             -ĳ�����ƶ�������ı䣬����Ƚ�ÿ��������� 3
+   12          //{-3,-1},{0,-1},{+3,-1},
+   13          //{-3, 0},       {+3, 0},
+   14          //{-3,+1},{0,+1},{+3,+1},
+   15          //�ٽ��������ȥ������
+   16          // -2, 1, 4
+   17          // -3,    3
+   18          // -4,-1, 2
+   19          //�ɴ˿��Եõ�һ�����ڷ������ꡣֻ����ÿ���ƶ����ڷ�
+             -����������¼��Ӧ���֣��Ϳ�ȷ����������
+   20          //���㷨���κ�ԭ���ֻ��Ϊ�˵õ��˸���һ����ֵ������
+             -�����ж����򣬺�������Գ˴��� 2 ������ֵ��2���ڻ������
+             -��
+   21          //************************************
+   22          //******************����Ӧ�����Թ�����************************
+   23          uint16 L_Thres_Record[MAX_LINE_POINTS];
+   24          uint16 R_Thres_Record[MAX_LINE_POINTS];
+   25          // 
+   26          const int8 L_Face_Dir[4][2] = { {0,-1},{1,0},{0,1},{-1,0} };  //����Թ�����
+   27          //  0
+   28          //3   1
+   29          //  2
+   30          
+   31          const int8 L_Face_Dir_L[4][2] = { {-1,-1},{1,-1},{1,1},{-1,1} };  //����������ǰ��
+             -�
+   32          //0   1
+   33          //
+   34          //3   2
+   35          
+   36          const int8 R_Face_Dir[4][2] = { {0,-1},{1,0},{0,1},{-1,0} };  //�Ҳ��Թ�����
+   37          //  0
+   38          //3   1
+   39          //  2
+   40          
+   41          const int8 R_Face_Dir_R[4][2] = { {1,-1},{1,1},{-1,1},{-1,-1} };  //�Ҳ��������ǰ��
+   42          //3   0
+   43          //
+   44          //2   1
+   45          
+   46          const int8 Square_0[25][2] = {              //һ��5 * 5�ľ������������ĵ�
+             -��Χ�ľֲ���ֵ���ֲ���ֵ��
+   47          {-2,-2},{-1,-2},{0,-2},{+1,-2},{+2,-2},
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 2   
+
+   48          {-2,-1},{-1,-1},{0,-1},{+1,-1},{+2,-1},
+   49          {-2,-0},{-1, 0},{0, 0},{+1, 0},{+2,-0},
+   50          {-2,+1},{-1,+1},{0,+1},{+1,+1},{+2,+1},
+   51          {-2,+2},{-1,+2},{0,+2},{+1,+2},{+2,+2}
+   52          };
+   53          uint8 Clip_Value = 1; //ֵԽ��Խ��������
+   54          
+   55          //�Թ�����ֹͣ���߱�־λ
+   56          uint8 L_Stop_Flag = 0;
+   57          uint8 R_Stop_Flag = 0;
+   58          uint16 L_Boundary_Limit = 45;  //������ߵ������ޣ���⵽����ʱ��
+             -��
+   59          uint16 R_Boundary_Limit = 45;  //�Ҳ����ߵ������ޣ���⵽����ʱ���
+             -���
+   60          //**********************************************************
+   61          /******
+   62          * �������ܣ�      ��ȡ������ά�������
+   63          * ����˵����      �����Ͻ����������Ӧ�Թ��Ż���
+             -�����Ӧ�����Թ�
+   64          * ��  �Σ�        uint16 Break_Flag         ���ѭ����������ֹ����
+             -������һ��Ϊ3~4��ͼ����
+   65          *                uint8(*image)[Image_X]     ��ȡ���ߵ�ͼ��
+   66          *                uint8(*l_line)[2]          ��������ߵĶ�ά����
+   67          *                uint8(*r_line)[2]          ����Ҳ���ߵĶ�ά����
+   68          *                int8 *l_dir                ���������ÿ�����������
+             -���
+   69          *                int8 *r_dir                ����Ҳ����ÿ�����������
+             -��
+   70          *                uint16 *l_stastic          ��¼�����ߵ�ĸ���
+   71          *                uint16 *r_stastic          ��¼�Ҳ���ߵ�ĸ���
+   72          *                uint8 *x_meet              ��¼������������������
+             -��X����
+   73          *                uint8 *y_meet              ��¼������������������
+             -��Y����
+   74          *                uint8 l_start_x            ���������ʼ���X����
+   75          *                uint8 l_start_y            ���������ʼ���Y����
+   76          *                uint8 r_start_x            �Ҳ�������ʼ���X����
+   77          *                uint8 r_start_y            �Ҳ�������ʼ���Y����
+   78          *                uint8 clip_value           ����ÿ����ֵʱ��ӵľ���ֵ��һ�
+             -��Ϊ-5 ~ 5������ǿ�зָ��ֱ����Ϊ0
+   79          *
+   80          * ʾ����         Dir_Labyrinth_5((uint16)Use_Num, Find_Line_Image, Adaptive_L_Line, Adaptive_R_Li
+             -ne, Adaptive_L_Grow_Dir, Adaptive_R_Grow_Dir, &Adaptive_L_Statics, &Adaptive_R_Statics, &Adaptive_X_Meet, &Adaptive_Y_Me
+             -et,
+   81                             Adaptive_L_Start_Point[0], Adaptive_L_Start_Point[1], Adaptive_R_Start_Point[0], Adapt
+             -ive_R_Start_Point[1], 0);
+   82          * ����ֵ��        ��
+   83          */
+   84          void Dir_Labyrinth_5(uint16 Break_Flag, uint8(*image)[Image_X], uint8(*l_line)[2], uint8(*r_line)[2], int
+             -8* l_dir, int8* r_dir, uint16* l_stastic, uint16* r_stastic, uint8* x_meet, uint8* y_meet,
+   85              uint8 l_start_x, uint8 l_start_y, uint8 r_start_x, uint8 r_start_y, uint8 clip_value)
+   86          {
+   87   1          uint8 j = 0;
+   88   1      
+   89   1      
+   90   1          //��߱���
+   91   1          uint8 L_Center_Point[2] = { 0 };     //���ÿ���ҵ���XY����
+   92   1          uint16 L_Data_Statics = 0;          //ͳ������ҵ��ı��ߵ�ĸ���
+   93   1      
+   94   1          uint8  L_Front_Value = 0;           //��� �����ǰ����ĻҶ�ֵ
+   95   1          uint8  L_Front_L_Value = 0;         //��� �������ǰ����ĻҶ�ֵ
+   96   1      
+   97   1          uint8  L_Dir = 0;                   //�˲�������ת��
+   98   1          uint8  L_Turn_Num = 0;              //��¼ת������������ĵ�ǰ����
+             -���Ҷ��Ǻ�ɫ���أ��ͻ���һ����ת���ĴΣ���¼���Ĵ�ʱ�˳�ѭ��
+             -��ֹ��������
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 3   
+
+   99   1          uint16 L_Pixel_Value_Sum = 0;       //���ĵ�����Χ24���������ֵ��
+             -��
+  100   1          uint16 L_Thres = 0;                 //�ֲ���ֵ,��L_Pixel_Value_Sum / 25
+  101   1      
+  102   1          //�ұ߱���
+  103   1          uint8  R_Center_Point[2] = { 0 };     //���ÿ���ҵ���XY����
+  104   1          uint16 R_Data_Statics = 0;          //ͳ���ұ��ҵ��ı��ߵ�ĸ���
+  105   1      
+  106   1          uint8  R_Front_Value = 0;           //�Ҳ� �����ǰ����ĻҶ�ֵ
+  107   1          uint8  R_Front_R_Value = 0;         //�Ҳ� �������ǰ����ĻҶ�ֵ
+  108   1      
+  109   1          uint8  R_Dir = 0;                   //�˲�������ת��
+  110   1          uint8  R_Turn_Num = 0;              //��¼ת������������ĵ�ǰ����
+             -���Ҷ��Ǻ�ɫ���أ��ͻ���һ����ת���ĴΣ���¼���Ĵ�ʱ�˳�ѭ��
+             -��ֹ��������
+  111   1          uint16 R_Pixel_Value_Sum = 0;       //���ĵ�����Χ24���������ֵ��
+             -��
+  112   1          uint16 R_Thres = 0;                 //�ֲ���ֵ
+  113   1      
+  114   1          //��һ�θ��������  ���ҵ������ֵ������
+  115   1          L_Center_Point[0] = l_start_x + 1; //x
+  116   1          L_Center_Point[1] = l_start_y; //y
+  117   1          R_Center_Point[0] = r_start_x - 1;//x
+  118   1          R_Center_Point[1] = r_start_y;//y
+  119   1      
+  120   1          L_Stop_Flag = 0;  // 0:��������    1������������ֹͣ���
+             -�
+  121   1          R_Stop_Flag = 0;
+  122   1      
+  123   1          //��������Թ�ѭ��
+  124   1          while (Break_Flag--)
+  125   1          {
+  126   2              //���
+  127   2             //�ж��������󣬹ҳ�ֹͣ��־λ����������ֹͣ��
+  128   2              if (L_Stop_Flag == 0)
+  129   2              {
+  130   3                  l_line[L_Data_Statics][0] = L_Center_Point[0];  //�ҵ������ĵ�X�����
+             -������������
+  131   3                  l_line[L_Data_Statics][1] = L_Center_Point[1];  //�ҵ������ĵ�Y�����
+             -������������
+  132   3      
+  133   3                  if (L_Data_Statics != 0)
+  134   3                  {
+  135   4                      switch (l_dir[L_Data_Statics - 1])  //������һ����Ը�����һ
+             -����������������Ż�����ʱ��
+  136   4                      {
+  137   5                          //�ӵڶ����㿪ʼ����һ�������ֵҪ25����ȫ��
+             -����һ��
+  138   5                          //���������������ʱ����ԭ�ȵ�25�μӷ��
+             -�����Ϊʮ�μ���
+  139   5                          //��б������ʱ����ԭ�ȵ�25�μӷ������Ϊʮ�
+             -�˴�����
+  140   5                          //���Ի���ͼ�������Ŵ����߼��飬�Ϳ��Ժܿ
+             -��ٵ����
+  141   5                      case 1:
+  142   5                      {
+  143   6                          L_Pixel_Value_Sum = L_Pixel_Value_Sum - image[L_Center_Point[1] + 3][L_Center_Point[0
+             -] + 2] - image[L_Center_Point[1] + 3][L_Center_Point[0] + 1]
+  144   6                              - image[L_Center_Point[1] + 3][L_Center_Point[0] + 0] - image[L_Center_Point[1] +
+             - 3][L_Center_Point[0] - 1]
+  145   6                              - image[L_Center_Point[1] + 3][L_Center_Point[0] - 2]
+  146   6                              + image[L_Center_Point[1] - 2][L_Center_Point[0] + 2] + image[L_Center_Point[1] -
+             - 2][L_Center_Point[0] + 1]
+  147   6                              + image[L_Center_Point[1] - 2][L_Center_Point[0] + 0] + image[L_Center_Point[1] -
+             - 2][L_Center_Point[0] - 1]
+  148   6                              + image[L_Center_Point[1] - 2][L_Center_Point[0] - 2];
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 4   
+
+  149   6                          break;
+  150   6                      }
+  151   5                      case -2:
+  152   5                      {
+  153   6                          L_Pixel_Value_Sum = L_Pixel_Value_Sum - image[L_Center_Point[1] - 1][L_Center_Point[0
+             -] + 3] - image[L_Center_Point[1] - 0][L_Center_Point[0] + 3]
+  154   6                              - image[L_Center_Point[1] + 1][L_Center_Point[0] + 3] - image[L_Center_Point[1] +
+             - 2][L_Center_Point[0] + 3]
+  155   6                              - image[L_Center_Point[1] + 3][L_Center_Point[0] + 3] - image[L_Center_Point[1] +
+             - 3][L_Center_Point[0] + 2]
+  156   6                              - image[L_Center_Point[1] + 3][L_Center_Point[0] + 1] - image[L_Center_Point[1] +
+             - 3][L_Center_Point[0] - 0]
+  157   6                              - image[L_Center_Point[1] + 3][L_Center_Point[0] - 1]
+  158   6                              + image[L_Center_Point[1] + 2][L_Center_Point[0] - 2] + image[L_Center_Point[1] +
+             - 1][L_Center_Point[0] - 2]
+  159   6                              + image[L_Center_Point[1] + 0][L_Center_Point[0] - 2] + image[L_Center_Point[1] -
+             - 1][L_Center_Point[0] - 2]
+  160   6                              + image[L_Center_Point[1] - 2][L_Center_Point[0] - 2] + image[L_Center_Point[1] -
+             - 2][L_Center_Point[0] - 1]
+  161   6                              + image[L_Center_Point[1] - 2][L_Center_Point[0] - 0] + image[L_Center_Point[1] -
+             - 2][L_Center_Point[0] + 1]
+  162   6                              + image[L_Center_Point[1] - 2][L_Center_Point[0] + 2];
+  163   6                          break;
+  164   6                      }
+  165   5                      case -3:
+  166   5                      {
+  167   6                          L_Pixel_Value_Sum = L_Pixel_Value_Sum - image[L_Center_Point[1] - 2][L_Center_Point[0
+             -] + 3] - image[L_Center_Point[1] - 1][L_Center_Point[0] + 3]
+  168   6                              - image[L_Center_Point[1] + 0][L_Center_Point[0] + 3] - image[L_Center_Point[1] +
+             - 1][L_Center_Point[0] + 3]
+  169   6                              - image[L_Center_Point[1] + 2][L_Center_Point[0] + 3]
+  170   6                              + image[L_Center_Point[1] - 2][L_Center_Point[0] - 2] + image[L_Center_Point[1] -
+             - 1][L_Center_Point[0] - 2]
+  171   6                              + image[L_Center_Point[1] - 0][L_Center_Point[0] - 2] + image[L_Center_Point[1] +
+             - 1][L_Center_Point[0] - 2]
+  172   6                              + image[L_Center_Point[1] + 2][L_Center_Point[0] - 2];
+  173   6                          break;
+  174   6                      }
+  175   5                      case -4:
+  176   5                      {
+  177   6                          L_Pixel_Value_Sum = L_Pixel_Value_Sum - image[L_Center_Point[1] - 3][L_Center_Point[0
+             -] - 1] - image[L_Center_Point[1] - 3][L_Center_Point[0] + 0]
+  178   6                              - image[L_Center_Point[1] - 3][L_Center_Point[0] + 1] - image[L_Center_Point[1] -
+             - 3][L_Center_Point[0] + 2]
+  179   6                              - image[L_Center_Point[1] - 3][L_Center_Point[0] + 3] - image[L_Center_Point[1] -
+             - 2][L_Center_Point[0] + 3]
+  180   6                              - image[L_Center_Point[1] - 1][L_Center_Point[0] + 3] - image[L_Center_Point[1] +
+             - 0][L_Center_Point[0] + 3]
+  181   6                              - image[L_Center_Point[1] + 1][L_Center_Point[0] + 3]
+  182   6                              + image[L_Center_Point[1] - 2][L_Center_Point[0] - 2] + image[L_Center_Point[1] -
+             - 1][L_Center_Point[0] - 2]
+  183   6                              + image[L_Center_Point[1] + 0][L_Center_Point[0] - 2] + image[L_Center_Point[1] +
+             - 1][L_Center_Point[0] - 2]
+  184   6                              + image[L_Center_Point[1] + 2][L_Center_Point[0] - 2] + image[L_Center_Point[1] +
+             - 2][L_Center_Point[0] - 1]
+  185   6                              + image[L_Center_Point[1] + 2][L_Center_Point[0] - 0] + image[L_Center_Point[1] +
+             - 2][L_Center_Point[0] + 1]
+  186   6                              + image[L_Center_Point[1] + 2][L_Center_Point[0] + 2];
+  187   6                          break;
+  188   6                      }
+  189   5                      case -1:
+  190   5                      {
+  191   6                          L_Pixel_Value_Sum = L_Pixel_Value_Sum - image[L_Center_Point[1] - 3][L_Center_Point[0
+             -] - 2] - image[L_Center_Point[1] - 3][L_Center_Point[0] - 1]
+  192   6                              - image[L_Center_Point[1] - 3][L_Center_Point[0] + 0] - image[L_Center_Point[1] -
+             - 3][L_Center_Point[0] + 1]
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 5   
+
+  193   6                              - image[L_Center_Point[1] - 3][L_Center_Point[0] + 2]
+  194   6                              + image[L_Center_Point[1] + 2][L_Center_Point[0] - 2] + image[L_Center_Point[1] +
+             - 2][L_Center_Point[0] - 1]
+  195   6                              + image[L_Center_Point[1] + 2][L_Center_Point[0] + 0] + image[L_Center_Point[1] +
+             - 2][L_Center_Point[0] + 1]
+  196   6                              + image[L_Center_Point[1] + 2][L_Center_Point[0] + 2];
+  197   6                          break;
+  198   6                      }
+  199   5                      case 2:
+  200   5                      {
+  201   6                          L_Pixel_Value_Sum = L_Pixel_Value_Sum - image[L_Center_Point[1] + 1][L_Center_Point[0
+             -] - 3] - image[L_Center_Point[1] + 0][L_Center_Point[0] - 3]
+  202   6                              - image[L_Center_Point[1] - 1][L_Center_Point[0] - 3] - image[L_Center_Point[1] -
+             - 2][L_Center_Point[0] - 3]
+  203   6                              - image[L_Center_Point[1] - 3][L_Center_Point[0] - 3] - image[L_Center_Point[1] -
+             - 3][L_Center_Point[0] - 2]
+  204   6                              - image[L_Center_Point[1] - 3][L_Center_Point[0] - 1] - image[L_Center_Point[1] -
+             - 3][L_Center_Point[0] + 0]
+  205   6                              - image[L_Center_Point[1] - 3][L_Center_Point[0] + 1]
+  206   6                              + image[L_Center_Point[1] - 2][L_Center_Point[0] + 2] + image[L_Center_Point[1] -
+             - 1][L_Center_Point[0] + 2]
+  207   6                              + image[L_Center_Point[1] - 0][L_Center_Point[0] + 2] + image[L_Center_Point[1] +
+             - 1][L_Center_Point[0] + 2]
+  208   6                              + image[L_Center_Point[1] + 2][L_Center_Point[0] + 2] + image[L_Center_Point[1] +
+             - 2][L_Center_Point[0] + 1]
+  209   6                              + image[L_Center_Point[1] + 2][L_Center_Point[0] + 0] + image[L_Center_Point[1] +
+             - 2][L_Center_Point[0] - 1]
+  210   6                              + image[L_Center_Point[1] + 2][L_Center_Point[0] - 2];
+  211   6                          break;
+  212   6                      }
+  213   5                      case 3:
+  214   5                      {
+  215   6                          L_Pixel_Value_Sum = L_Pixel_Value_Sum - image[L_Center_Point[1] + 2][L_Center_Point[0
+             -] - 3] - image[L_Center_Point[1] + 1][L_Center_Point[0] - 3]
+  216   6                              - image[L_Center_Point[1] - 0][L_Center_Point[0] - 3] - image[L_Center_Point[1] -
+             - 1][L_Center_Point[0] - 3]
+  217   6                              - image[L_Center_Point[1] - 2][L_Center_Point[0] - 3]
+  218   6                              + image[L_Center_Point[1] + 2][L_Center_Point[0] + 2] + image[L_Center_Point[1] +
+             - 1][L_Center_Point[0] + 2]
+  219   6                              + image[L_Center_Point[1] + 0][L_Center_Point[0] + 2] + image[L_Center_Point[1] -
+             - 1][L_Center_Point[0] + 2]
+  220   6                              + image[L_Center_Point[1] - 2][L_Center_Point[0] + 2];
+  221   6                          break;
+  222   6                      }
+  223   5                      case 4:
+  224   5                      {
+  225   6                          L_Pixel_Value_Sum = L_Pixel_Value_Sum - image[L_Center_Point[1] + 3][L_Center_Point[0
+             -] + 1] - image[L_Center_Point[1] + 3][L_Center_Point[0] - 0]
+  226   6                              - image[L_Center_Point[1] + 3][L_Center_Point[0] - 1] - image[L_Center_Point[1] +
+             - 3][L_Center_Point[0] - 2]
+  227   6                              - image[L_Center_Point[1] + 3][L_Center_Point[0] - 3] - image[L_Center_Point[1] +
+             - 2][L_Center_Point[0] - 3]
+  228   6                              - image[L_Center_Point[1] + 1][L_Center_Point[0] - 3] - image[L_Center_Point[1] -
+             - 0][L_Center_Point[0] - 3]
+  229   6                              - image[L_Center_Point[1] - 1][L_Center_Point[0] - 3]
+  230   6                              + image[L_Center_Point[1] + 2][L_Center_Point[0] + 2] + image[L_Center_Point[1] +
+             - 1][L_Center_Point[0] + 2]
+  231   6                              + image[L_Center_Point[1] - 0][L_Center_Point[0] + 2] + image[L_Center_Point[1] -
+             - 1][L_Center_Point[0] + 2]
+  232   6                              + image[L_Center_Point[1] - 2][L_Center_Point[0] + 2] + image[L_Center_Point[1] -
+             - 2][L_Center_Point[0] + 1]
+  233   6                              + image[L_Center_Point[1] - 2][L_Center_Point[0] + 0] + image[L_Center_Point[1] -
+             - 2][L_Center_Point[0] - 1]
+  234   6                              + image[L_Center_Point[1] - 2][L_Center_Point[0] - 2];
+  235   6                          break;
+  236   6                      }
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 6   
+
+  237   5                      }
+  238   4                  }
+  239   3                  else
+  240   3                  {
+  241   4                      for (j = 0; j < 25; j++)    //��һ����ֵ��25����ȫ����һ�
+             -��飬���������ֵ���������������
+  242   4                      {
+  243   5                          L_Pixel_Value_Sum += image[L_Center_Point[1] + Square_0[j][1]][L_Center_Point[0] + Sq
+             -uare_0[j][0]];
+  244   5                      }
+  245   4                  }
+  246   3      
+  247   3                  L_Thres = (L_Pixel_Value_Sum + Thres_Interfere) / Thres_Num_Interfere;   //��ֵΪ25��
+             -��Ҷ�ֵ��ƽ��ֵ
+  248   3                  L_Thres -= clip_value;              //���õ��ĻҶ���ֵ��ȥһ�����
+             -���ֵ�������Ż��ж�
+  249   3      
+  250   3                  //����Ϊ����ƽ���˲�����֪�����Ƿ������
+             -��㷨���˴�Ϊ����ԭ������������Ӧ�ɽϰ������ֲ������
+             -������򣬻�֮�Ĺ��������������ϸ����ԭ��
+  251   3      //            if (Thres_Filiter_Flag_1 == 1 || Thres_Filiter_Flag_2 == 1)
+  252   3      //            {
+  253   3      //                if (L_Data_Statics > 3)
+  254   3      //                {
+  255   3      //                    L_Thres = L_Thres * 1.3f - L_Thres_Record[L_Data_Statics - 1] * 0.2f - L_Thres_Reco
+             -rd[L_Data_Statics - 2] * 0.1f;
+  256   3      //                }
+  257   3      //            }
+  258   3      
+  259   3                  L_Thres_Record[L_Data_Statics] = L_Thres;
+  260   3                  L_Data_Statics++;                   //ÿ�ҵ�һ����ͳ�Ƹ���+1
+  261   3                  if (L_Data_Statics > L_Boundary_Limit) { L_Stop_Flag = 1; }    //��ֹ180������
+             -���������
+  262   3      
+  263   3              L_Judge_Again:    //L_Judge_Again �� goto ���ʹ��
+  264   3                  if (L_Stop_Flag == 0)
+  265   3                  {
+  266   4                      L_Front_Value = image[L_Center_Point[1] + L_Face_Dir[L_Dir][1]][L_Center_Point[0] + L_Fac
+             -e_Dir[L_Dir][0]];          //��¼�����ǰ����ĻҶ�ֵ
+  267   4                      L_Front_L_Value = image[L_Center_Point[1] + L_Face_Dir_L[L_Dir][1]][L_Center_Point[0] + L
+             -_Face_Dir_L[L_Dir][0]];    //��¼�������ǰ����ĻҶ�ֵ
+  268   4                      if (L_Front_Value < L_Thres)     //�����ǰ�����Ǻ�ɫ
+  269   4                      {
+  270   5                          L_Dir = (L_Dir + 1) % 4;    //����תһ��
+  271   5                          L_Turn_Num++;
+  272   5                          if (L_Turn_Num == 4)        //��������
+  273   5                          {
+  274   6                              L_Stop_Flag = 1;       //��ǰ�����Ҷ��Ǻ�ɫʱ������
+             -��������ֹͣ�������
+  275   6                          }
+  276   5                          goto L_Judge_Again;
+  277   5                      }
+  278   4                      else if (L_Front_L_Value < L_Thres)   //��ǰ�����Ǻ�ɫ��ǰ����
+             -��ǰ�ɫ
+  279   4                      {
+  280   5      
+  281   5                          // ���������ȼ�����һ��������
+  282   5                          // int next_x = L_Center_Point[0] + L_Face_Dir[L_Dir][0];
+  283   5                          // int next_y = L_Center_Point[1] + L_Face_Dir[L_Dir][1];
+  284   5      
+  285   5                          // ���������߽��жϣ������һ������ͼ�
+             -�Χ��ֹͣ����
+  286   5                          // ע�⣺Image_X ��ͼ���ȣ�Image_Y ��ͼ��߶ȣ����滻Ϊ�
+             -�������е�ʵ�ʺ궨��
+  287   5                          if (L_Center_Point[0] + L_Face_Dir[L_Dir][0] < 3 || L_Center_Point[0] + L_Face_Dir[L_
+             -Dir][0] >= 77 || L_Center_Point[1] + L_Face_Dir[L_Dir][1] < 2 || L_Center_Point[1] + L_Face_Dir[L_Dir][1] >= 58)
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 7   
+
+  288   5                          {
+  289   6                              L_Stop_Flag = 1;
+  290   6                          }
+  291   5                          else if (L_Center_Point[1] + L_Face_Dir[L_Dir][1] <= 4 && L_Center_Point[0] + L_Face_
+             -Dir[L_Dir][0] > 38)
+  292   5                          {
+  293   6                              L_Stop_Flag = 1;
+  294   6                          }
+  295   5                          else {
+  296   6                              L_Center_Point[0] += L_Face_Dir[L_Dir][0];
+  297   6                              L_Center_Point[1] += L_Face_Dir[L_Dir][1];      //��ǰ��һ��
+  298   6                              l_dir[L_Data_Statics - 1] = (L_Face_Dir[L_Dir][0] * 3) - L_Face_Dir[L_Dir][1];
+  299   6                              L_Turn_Num = 0;
+  300   6                          }
+  301   5      
+  302   5                      }
+  303   4                      else        //��ǰ����ǰ�����ǰ�ɫ��
+  304   4                      {
+  305   5      
+  306   5                          // ���������ȼ�����һ��������
+  307   5                          // int next_x = L_Center_Point[0] + L_Face_Dir[L_Dir][0];
+  308   5                          // int next_y = L_Center_Point[1] + L_Face_Dir[L_Dir][1];
+  309   5      
+  310   5                          // ���������߽��жϣ������һ������ͼ�
+             -�Χ��ֹͣ����
+  311   5                          // ע�⣺Image_X ��ͼ���ȣ�Image_Y ��ͼ��߶ȣ����滻Ϊ�
+             -�������е�ʵ�ʺ궨��
+  312   5                          if (L_Center_Point[0] + L_Face_Dir[L_Dir][0] < 3 || L_Center_Point[0] + L_Face_Dir[L_
+             -Dir][0] >= 77 || L_Center_Point[1] + L_Face_Dir[L_Dir][1] < 2 || L_Center_Point[1] + L_Face_Dir[L_Dir][1] >= 58)
+  313   5                          {
+  314   6                              L_Stop_Flag = 1;
+  315   6                          }
+  316   5                          else if (L_Center_Point[1] + L_Face_Dir[L_Dir][1] <= 4 && L_Center_Point[0] + L_Face_
+             -Dir[L_Dir][0] >38)
+  317   5                          {
+  318   6                              L_Stop_Flag = 1;
+  319   6                          }
+  320   5                          else {
+  321   6                              L_Center_Point[0] += L_Face_Dir_L[L_Dir][0];
+  322   6                              L_Center_Point[1] += L_Face_Dir_L[L_Dir][1];        //����ǰ�����
+             -���
+  323   6                              l_dir[L_Data_Statics - 1] = (L_Face_Dir_L[L_Dir][0] * 3) - L_Face_Dir_L[L_Dir][1]
+             -;
+  324   6                              L_Dir = (L_Dir + 3) % 4;        //��תһ��
+  325   6                              L_Turn_Num = 0;
+  326   6                          }
+  327   5      
+  328   5                      }
+  329   4                      // �յ㶯̬���磺����յ�=�������磬˫��յ�=ʮ��
+             -����
+  330   4      //                if (L_Data_Statics >= 8 && L_Boundary_Limit >= 50)
+  331   4      //                {
+  332   4      //                    int8 d_cur  = l_dir[L_Data_Statics - 1];
+  333   4      //                    int8 d_prev = l_dir[L_Data_Statics - 3];
+  334   4      //                    // ��ת��յ㣺���������(1)������(4)תΪ��
+             -��(-3,-4)�����Ϲ���(-2)
+  335   4      //                    if ((d_cur == -3 || d_cur == -4 || d_cur == -2) &&
+  336   4      //                        (d_prev == 1 || d_prev == 4))
+  337   4      //                    {
+  338   4      //                        // ����Ҳ�Ҳ�������˫��յ�=ʮ�֡�����
+             -Ĭ��
+  339   4      //                        if (R_Boundary_Limit >= 55)
+  340   4      //                        {
+  341   4      //                            L_Boundary_Limit = 48;
+  342   4      //                            R_Boundary_Limit = 48;
+  343   4      //                        }
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 8   
+
+  344   4      //                        else
+  345   4      //                        {
+  346   4      //                            L_Boundary_Limit = 55;   // ����յ�=��������չ
+  347   4      //                        }
+  348   4      //                    }
+  349   4      //                }
+  350   4                      if (L_Data_Statics >= 5)     //O���������ת��һȦ��ص�ԭ��
+             -���Ҳ��һ��������������ֹͣ����
+  351   4                      {
+  352   5                          if (l_line[L_Data_Statics - 1][0] == l_line[L_Data_Statics - 5][0] &&
+  353   5                              l_line[L_Data_Statics - 1][1] == l_line[L_Data_Statics - 5][1])
+  354   5                          {
+  355   6                              L_Stop_Flag = 1;
+  356   6                          }
+  357   5                      }
+  358   4                  }
+  359   3              }
+  360   2      
+  361   2              //�Ҳ������ͬ�������Ҳ���ƣ���������Ҳ�ͺܼ
+             -�
+  362   2              if (R_Stop_Flag == 0)
+  363   2              {
+  364   3                  r_line[R_Data_Statics][0] = R_Center_Point[0];
+  365   3                  r_line[R_Data_Statics][1] = R_Center_Point[1];
+  366   3      
+  367   3                  if (R_Data_Statics != 0)
+  368   3                  {
+  369   4                      switch (r_dir[R_Data_Statics - 1])
+  370   4                      {
+  371   5                      case 1:
+  372   5                      {
+  373   6                          R_Pixel_Value_Sum = R_Pixel_Value_Sum - image[R_Center_Point[1] + 3][R_Center_Point[0
+             -] + 2] - image[R_Center_Point[1] + 3][R_Center_Point[0] + 1]
+  374   6                              - image[R_Center_Point[1] + 3][R_Center_Point[0] + 0] - image[R_Center_Point[1] +
+             - 3][R_Center_Point[0] - 1]
+  375   6                              - image[R_Center_Point[1] + 3][R_Center_Point[0] - 2]
+  376   6                              + image[R_Center_Point[1] - 2][R_Center_Point[0] + 2] + image[R_Center_Point[1] -
+             - 2][R_Center_Point[0] + 1]
+  377   6                              + image[R_Center_Point[1] - 2][R_Center_Point[0] + 0] + image[R_Center_Point[1] -
+             - 2][R_Center_Point[0] - 1]
+  378   6                              + image[R_Center_Point[1] - 2][R_Center_Point[0] - 2];
+  379   6                          break;
+  380   6                      }
+  381   5                      case -2:
+  382   5                      {
+  383   6                          R_Pixel_Value_Sum = R_Pixel_Value_Sum - image[R_Center_Point[1] - 1][R_Center_Point[0
+             -] + 3] - image[R_Center_Point[1] - 0][R_Center_Point[0] + 3]
+  384   6                              - image[R_Center_Point[1] + 1][R_Center_Point[0] + 3] - image[R_Center_Point[1] +
+             - 2][R_Center_Point[0] + 3]
+  385   6                              - image[R_Center_Point[1] + 3][R_Center_Point[0] + 3] - image[R_Center_Point[1] +
+             - 3][R_Center_Point[0] + 2]
+  386   6                              - image[R_Center_Point[1] + 3][R_Center_Point[0] + 1] - image[R_Center_Point[1] +
+             - 3][R_Center_Point[0] - 0]
+  387   6                              - image[R_Center_Point[1] + 3][R_Center_Point[0] - 1]
+  388   6                              + image[R_Center_Point[1] + 2][R_Center_Point[0] - 2] + image[R_Center_Point[1] +
+             - 1][R_Center_Point[0] - 2]
+  389   6                              + image[R_Center_Point[1] + 0][R_Center_Point[0] - 2] + image[R_Center_Point[1] -
+             - 1][R_Center_Point[0] - 2]
+  390   6                              + image[R_Center_Point[1] - 2][R_Center_Point[0] - 2] + image[R_Center_Point[1] -
+             - 2][R_Center_Point[0] - 1]
+  391   6                              + image[R_Center_Point[1] - 2][R_Center_Point[0] - 0] + image[R_Center_Point[1] -
+             - 2][R_Center_Point[0] + 1]
+  392   6                              + image[R_Center_Point[1] - 2][R_Center_Point[0] + 2];
+  393   6                          break;
+  394   6                      }
+  395   5                      case -3:
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 9   
+
+  396   5                      {
+  397   6                          R_Pixel_Value_Sum = R_Pixel_Value_Sum - image[R_Center_Point[1] - 2][R_Center_Point[0
+             -] + 3] - image[R_Center_Point[1] - 1][R_Center_Point[0] + 3]
+  398   6                              - image[R_Center_Point[1] + 0][R_Center_Point[0] + 3] - image[R_Center_Point[1] +
+             - 1][R_Center_Point[0] + 3]
+  399   6                              - image[R_Center_Point[1] + 2][R_Center_Point[0] + 3]
+  400   6                              + image[R_Center_Point[1] - 2][R_Center_Point[0] - 2] + image[R_Center_Point[1] -
+             - 1][R_Center_Point[0] - 2]
+  401   6                              + image[R_Center_Point[1] - 0][R_Center_Point[0] - 2] + image[R_Center_Point[1] +
+             - 1][R_Center_Point[0] - 2]
+  402   6                              + image[R_Center_Point[1] + 2][R_Center_Point[0] - 2];
+  403   6                          break;
+  404   6                      }
+  405   5                      case -4:
+  406   5                      {
+  407   6                          R_Pixel_Value_Sum = R_Pixel_Value_Sum - image[R_Center_Point[1] - 3][R_Center_Point[0
+             -] - 1] - image[R_Center_Point[1] - 3][R_Center_Point[0] + 0]
+  408   6                              - image[R_Center_Point[1] - 3][R_Center_Point[0] + 1] - image[R_Center_Point[1] -
+             - 3][R_Center_Point[0] + 2]
+  409   6                              - image[R_Center_Point[1] - 3][R_Center_Point[0] + 3] - image[R_Center_Point[1] -
+             - 2][R_Center_Point[0] + 3]
+  410   6                              - image[R_Center_Point[1] - 1][R_Center_Point[0] + 3] - image[R_Center_Point[1] +
+             - 0][R_Center_Point[0] + 3]
+  411   6                              - image[R_Center_Point[1] + 1][R_Center_Point[0] + 3]
+  412   6                              + image[R_Center_Point[1] - 2][R_Center_Point[0] - 2] + image[R_Center_Point[1] -
+             - 1][R_Center_Point[0] - 2]
+  413   6                              + image[R_Center_Point[1] + 0][R_Center_Point[0] - 2] + image[R_Center_Point[1] +
+             - 1][R_Center_Point[0] - 2]
+  414   6                              + image[R_Center_Point[1] + 2][R_Center_Point[0] - 2] + image[R_Center_Point[1] +
+             - 2][R_Center_Point[0] - 1]
+  415   6                              + image[R_Center_Point[1] + 2][R_Center_Point[0] - 0] + image[R_Center_Point[1] +
+             - 2][R_Center_Point[0] + 1]
+  416   6                              + image[R_Center_Point[1] + 2][R_Center_Point[0] + 2];
+  417   6                          break;
+  418   6                      }
+  419   5                      case -1:
+  420   5                      {
+  421   6                          R_Pixel_Value_Sum = R_Pixel_Value_Sum - image[R_Center_Point[1] - 3][R_Center_Point[0
+             -] - 2] - image[R_Center_Point[1] - 3][R_Center_Point[0] - 1]
+  422   6                              - image[R_Center_Point[1] - 3][R_Center_Point[0] + 0] - image[R_Center_Point[1] -
+             - 3][R_Center_Point[0] + 1]
+  423   6                              - image[R_Center_Point[1] - 3][R_Center_Point[0] + 2]
+  424   6                              + image[R_Center_Point[1] + 2][R_Center_Point[0] - 2] + image[R_Center_Point[1] +
+             - 2][R_Center_Point[0] - 1]
+  425   6                              + image[R_Center_Point[1] + 2][R_Center_Point[0] + 0] + image[R_Center_Point[1] +
+             - 2][R_Center_Point[0] + 1]
+  426   6                              + image[R_Center_Point[1] + 2][R_Center_Point[0] + 2];
+  427   6                          break;
+  428   6                      }
+  429   5                      case 2:
+  430   5                      {
+  431   6                          R_Pixel_Value_Sum = R_Pixel_Value_Sum - image[R_Center_Point[1] + 1][R_Center_Point[0
+             -] - 3] - image[R_Center_Point[1] + 0][R_Center_Point[0] - 3]
+  432   6                              - image[R_Center_Point[1] - 1][R_Center_Point[0] - 3] - image[R_Center_Point[1] -
+             - 2][R_Center_Point[0] - 3]
+  433   6                              - image[R_Center_Point[1] - 3][R_Center_Point[0] - 3] - image[R_Center_Point[1] -
+             - 3][R_Center_Point[0] - 2]
+  434   6                              - image[R_Center_Point[1] - 3][R_Center_Point[0] - 1] - image[R_Center_Point[1] -
+             - 3][R_Center_Point[0] + 0]
+  435   6                              - image[R_Center_Point[1] - 3][R_Center_Point[0] + 1]
+  436   6                              + image[R_Center_Point[1] - 2][R_Center_Point[0] + 2] + image[R_Center_Point[1] -
+             - 1][R_Center_Point[0] + 2]
+  437   6                              + image[R_Center_Point[1] - 0][R_Center_Point[0] + 2] + image[R_Center_Point[1] +
+             - 1][R_Center_Point[0] + 2]
+  438   6                              + image[R_Center_Point[1] + 2][R_Center_Point[0] + 2] + image[R_Center_Point[1] +
+             - 2][R_Center_Point[0] + 1]
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 10  
+
+  439   6                              + image[R_Center_Point[1] + 2][R_Center_Point[0] + 0] + image[R_Center_Point[1] +
+             - 2][R_Center_Point[0] - 1]
+  440   6                              + image[R_Center_Point[1] + 2][R_Center_Point[0] - 2];
+  441   6                          break;
+  442   6                      }
+  443   5                      case 3:
+  444   5                      {
+  445   6                          R_Pixel_Value_Sum = R_Pixel_Value_Sum - image[R_Center_Point[1] + 2][R_Center_Point[0
+             -] - 3] - image[R_Center_Point[1] + 1][R_Center_Point[0] - 3]
+  446   6                              - image[R_Center_Point[1] - 0][R_Center_Point[0] - 3] - image[R_Center_Point[1] -
+             - 1][R_Center_Point[0] - 3]
+  447   6                              - image[R_Center_Point[1] - 2][R_Center_Point[0] - 3]
+  448   6                              + image[R_Center_Point[1] + 2][R_Center_Point[0] + 2] + image[R_Center_Point[1] +
+             - 1][R_Center_Point[0] + 2]
+  449   6                              + image[R_Center_Point[1] + 0][R_Center_Point[0] + 2] + image[R_Center_Point[1] -
+             - 1][R_Center_Point[0] + 2]
+  450   6                              + image[R_Center_Point[1] - 2][R_Center_Point[0] + 2];
+  451   6                          break;
+  452   6                      }
+  453   5                      case 4:
+  454   5                      {
+  455   6                          R_Pixel_Value_Sum = R_Pixel_Value_Sum - image[R_Center_Point[1] + 3][R_Center_Point[0
+             -] + 1] - image[R_Center_Point[1] + 3][R_Center_Point[0] - 0]
+  456   6                              - image[R_Center_Point[1] + 3][R_Center_Point[0] - 1] - image[R_Center_Point[1] +
+             - 3][R_Center_Point[0] - 2]
+  457   6                              - image[R_Center_Point[1] + 3][R_Center_Point[0] - 3] - image[R_Center_Point[1] +
+             - 2][R_Center_Point[0] - 3]
+  458   6                              - image[R_Center_Point[1] + 1][R_Center_Point[0] - 3] - image[R_Center_Point[1] -
+             - 0][R_Center_Point[0] - 3]
+  459   6                              - image[R_Center_Point[1] - 1][R_Center_Point[0] - 3]
+  460   6                              + image[R_Center_Point[1] + 2][R_Center_Point[0] + 2] + image[R_Center_Point[1] +
+             - 1][R_Center_Point[0] + 2]
+  461   6                              + image[R_Center_Point[1] - 0][R_Center_Point[0] + 2] + image[R_Center_Point[1] -
+             - 1][R_Center_Point[0] + 2]
+  462   6                              + image[R_Center_Point[1] - 2][R_Center_Point[0] + 2] + image[R_Center_Point[1] -
+             - 2][R_Center_Point[0] + 1]
+  463   6                              + image[R_Center_Point[1] - 2][R_Center_Point[0] + 0] + image[R_Center_Point[1] -
+             - 2][R_Center_Point[0] - 1]
+  464   6                              + image[R_Center_Point[1] - 2][R_Center_Point[0] - 2];
+  465   6                          break;
+  466   6                      }
+  467   5                      }
+  468   4                  }
+  469   3                  else
+  470   3                  {
+  471   4                      for (j = 0; j < 25; j++)
+  472   4                      {
+  473   5                          R_Pixel_Value_Sum += image[R_Center_Point[1] + Square_0[j][1]][R_Center_Point[0] + Sq
+             -uare_0[j][0]];
+  474   5                      }
+  475   4                  }
+  476   3      
+  477   3                  R_Thres = (R_Pixel_Value_Sum + Thres_Interfere) / Thres_Num_Interfere;
+  478   3                  R_Thres -= clip_value;
+  479   3      
+  480   3      //            if (Thres_Filiter_Flag_1 == 1 || Thres_Filiter_Flag_2 == 1)
+  481   3      //            {
+  482   3      //                if (R_Data_Statics > 3)
+  483   3      //                {
+  484   3      //                    R_Thres = R_Thres * 1.3f - R_Thres_Record[R_Data_Statics - 1] * 0.2f - R_Thres_Reco
+             -rd[R_Data_Statics - 2] * 0.1f;
+  485   3      //                }
+  486   3      //            }
+  487   3      
+  488   3                  R_Thres_Record[R_Data_Statics] = R_Thres;
+  489   3      
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 11  
+
+  490   3                  R_Data_Statics++;
+  491   3                  if (R_Data_Statics > R_Boundary_Limit) { R_Stop_Flag = 1; }    //��ֹ180������
+             -���������
+  492   3      
+  493   3              R_Judgme_Again:
+  494   3                  if (R_Stop_Flag == 0)
+  495   3                  {
+  496   4                      R_Front_Value = image[R_Center_Point[1] + R_Face_Dir[R_Dir][1]][R_Center_Point[0] + R_Fac
+             -e_Dir[R_Dir][0]];
+  497   4                      R_Front_R_Value = image[R_Center_Point[1] + R_Face_Dir_R[R_Dir][1]][R_Center_Point[0] + R
+             -_Face_Dir_R[R_Dir][0]];
+  498   4                      if (R_Front_Value < R_Thres)
+  499   4                      {
+  500   5                          R_Dir = (R_Dir + 3) % 4;
+  501   5                          R_Turn_Num++;
+  502   5                          if (R_Turn_Num == 4)
+  503   5                          {
+  504   6                              R_Stop_Flag = 1;
+  505   6                          }
+  506   5                          goto R_Judgme_Again;
+  507   5                      }
+  508   4                      else if (R_Front_R_Value < R_Thres)
+  509   4                      {
+  510   5                          // ���������ȼ�����һ�������꣨��ǰ��
+             -��
+  511   5                          // int next_x = R_Center_Point[0] + R_Face_Dir[R_Dir][0];
+  512   5                          // int next_y = R_Center_Point[1] + R_Face_Dir[R_Dir][1];
+  513   5      
+  514   5                          // ���������߽��ж�
+  515   5                          if (R_Center_Point[0] + R_Face_Dir[R_Dir][0] < 3 || R_Center_Point[0] + R_Face_Dir[R_
+             -Dir][0] >= 77 || R_Center_Point[1] + R_Face_Dir[R_Dir][1] < 2 || R_Center_Point[1] + R_Face_Dir[R_Dir][1] >= 58)
+  516   5                          {
+  517   6                              R_Stop_Flag = 1;
+  518   6                          }
+  519   5                          else if (R_Center_Point[1] + R_Face_Dir[R_Dir][1] <=4  &&  R_Center_Point[0] + R_Face
+             -_Dir[R_Dir][0] < 42)
+  520   5                          {
+  521   6                              R_Stop_Flag = 1;
+  522   6                          }
+  523   5                          else {
+  524   6                              R_Center_Point[0] += R_Face_Dir[R_Dir][0];
+  525   6                              R_Center_Point[1] += R_Face_Dir[R_Dir][1];
+  526   6                              r_dir[R_Data_Statics - 1] = R_Face_Dir[R_Dir][0] * 3 - R_Face_Dir[R_Dir][1];
+  527   6                              R_Turn_Num = 0;
+  528   6                          }
+  529   5      
+  530   5                      }
+  531   4                      else
+  532   4                      {
+  533   5      
+  534   5                          // ���������ȼ�����һ�������꣨��ǰ��
+             -��
+  535   5                          // int next_x = R_Center_Point[0] + R_Face_Dir[R_Dir][0];
+  536   5                          // int next_y = R_Center_Point[1] + R_Face_Dir[R_Dir][1];
+  537   5      
+  538   5                          // ���������߽��ж�
+  539   5                          if (R_Center_Point[0] + R_Face_Dir[R_Dir][0] < 3 || R_Center_Point[0] + R_Face_Dir[R_
+             -Dir][0] >= 77 || R_Center_Point[1] + R_Face_Dir[R_Dir][1] < 2 || R_Center_Point[1] + R_Face_Dir[R_Dir][1] >= 58)
+  540   5                          {
+  541   6                              R_Stop_Flag = 1;
+  542   6                          }
+  543   5                          else if (R_Center_Point[1] + R_Face_Dir[R_Dir][1] <= 4 && R_Center_Point[0] + R_Face_
+             -Dir[R_Dir][0] < 42)
+  544   5                          {
+  545   6                              R_Stop_Flag = 1;
+  546   6                          }
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 12  
+
+  547   5                          else {
+  548   6                              R_Center_Point[0] += R_Face_Dir_R[R_Dir][0];
+  549   6                              R_Center_Point[1] += R_Face_Dir_R[R_Dir][1];
+  550   6                              r_dir[R_Data_Statics - 1] = R_Face_Dir_R[R_Dir][0] * 3 - R_Face_Dir_R[R_Dir][1];
+  551   6                              R_Dir = (R_Dir + 1) % 4;
+  552   6                              R_Turn_Num = 0;
+  553   6                          }
+  554   5      
+  555   5                      }
+  556   4                      // �յ㶯̬���磺����յ�=�������磬˫��յ�=ʮ��
+             -����
+  557   4                      if (R_Data_Statics >= 8 && R_Boundary_Limit >= 50)
+  558   4                      {
+  559   5                          int8 d_cur  = r_dir[R_Data_Statics - 1];
+  560   5                          int8 d_prev = r_dir[R_Data_Statics - 3];
+  561   5                          // ��ת�ҹյ㣺�������/б��(-2,1)תΪ��(3,4,2)
+  562   5                          if ((d_cur == 3 || d_cur == 4 || d_cur == 2) &&
+  563   5                              (d_prev == -2 || d_prev == 1))
+  564   5                          {
+  565   6                              // ������Ҳ�������˫��յ�=ʮ�֡������
+             -���
+  566   6                              if (L_Boundary_Limit >= 55)
+  567   6                              {
+  568   7                                  L_Boundary_Limit = 48;
+  569   7                                  R_Boundary_Limit = 48;
+  570   7                              }
+  571   6                              else
+  572   6                              {
+  573   7                                  R_Boundary_Limit = 55;   // ����յ�=��������չ
+  574   7                              }
+  575   6                          }
+  576   5                      }
+  577   4                      if (R_Data_Statics >= 5)
+  578   4                      {
+  579   5                          if (r_line[R_Data_Statics - 1][0] == r_line[R_Data_Statics - 5][0] &&
+  580   5                              r_line[R_Data_Statics - 1][1] == r_line[R_Data_Statics - 5][1])
+  581   5                          {
+  582   6                              R_Stop_Flag = 1;
+  583   6                          }
+  584   5                      }
+  585   4                  }
+  586   3              }
+  587   2      
+  588   2              if (L_Stop_Flag == 0 && R_Stop_Flag == 0)
+  589   2              {
+  590   3                  if ((My_ABS(r_line[R_Data_Statics - 1][0] - l_line[L_Data_Statics - 1][0]) <= 3)
+  591   3                      && (My_ABS(r_line[R_Data_Statics - 1][1] - l_line[L_Data_Statics - 1][1]) <= 3))        /
+             -/���������������˳�ѭ����һ��ͼ�����߽���
+  592   3                  {
+  593   4                      *y_meet = (r_line[R_Data_Statics - 1][1] + l_line[L_Data_Statics - 1][1]) >> 1;  //��
+             -¼������Y
+  594   4                      *x_meet = (r_line[R_Data_Statics - 1][0] + l_line[L_Data_Statics - 1][0]) >> 1;  //��
+             -¼������X
+  595   4                      break;
+  596   4                  }
+  597   3              }
+  598   2              //��һ���������ʱ������������ж��ſ���һ�
+             -�����ֹʵ��������û���ж����������������ҵ����
+  599   2              else
+  600   2              {
+  601   3                  if ((My_ABS(r_line[R_Data_Statics - 1][0] - l_line[L_Data_Statics - 1][0]) <= 5)
+  602   3                      && (My_ABS(r_line[R_Data_Statics - 1][1] - l_line[L_Data_Statics - 1][1]) <= 5))        /
+             -/���������������˳�ѭ����һ��ͼ�����߽���
+  603   3                  {
+  604   4                      *y_meet = (r_line[R_Data_Statics - 1][1] + l_line[L_Data_Statics - 1][1]) >> 1;  //��
+             -¼������Y
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 13  
+
+  605   4                      *x_meet = (r_line[R_Data_Statics - 1][0] + l_line[L_Data_Statics - 1][0]) >> 1;  //��
+             -¼������X
+  606   4                      break;
+  607   4                  }
+  608   3              }
+  609   2          }
+  610   1          L_Stop_Flag = 0;
+  611   1          R_Stop_Flag = 0;
+  612   1          *l_stastic = L_Data_Statics;    //��¼�����ߵ����
+  613   1          *r_stastic = R_Data_Statics;    //��¼�Ҳ���ߵ����
+  614   1      }
+  615          
+  616          
+  617          //*****************************������ȡ*********************************
+  618          
+  619          /**
+  620          * �������ܣ�      �ɶ�ά����������ȡһά����
+  621          * ����˵����      ��
+  622          * ��  �Σ�        uint16 l_total       //����ά���ߵ�ĸ���
+  623          *                 uint16 r_total      //�Ҳ��ά���ߵ�ĸ���
+  624          *                 uint8 start         //��ʼ�У�ͼ��ײ���
+  625          *                 uint8 end           //��ֹ�У�ͼ�񶥲���
+  626          *                 uint8 *l_border     //�洢���һά���ߵ�����
+  627          *                 uint8 *r_border     //�洢�Ҳ�һά���ߵ�����
+  628          *                 uint8(*l_line)[2]   //�洢����ά���ߵ�����
+  629          *                 uint8(*r_line)[2]   //�洢�Ҳ��ά���ߵ�����
+  630          *
+  631          * ʾ����          Get_Border(L_Statics, R_Statics, Image_Y - 3, 2, L_Border, R_Border, L_Line, R_
+             -Line);
+  632          * ����ֵ��        ��
+  633          */
+  634          //void Get_Border(uint16 l_total, uint16 r_total, uint8 start, uint8 end, uint8 *l_border, uint8 *r_borde
+             -r, uint8(*l_line)[2], uint8(*r_line)[2])
+  635          //{
+  636          //    uint8 i = 0;
+  637          //    uint16 j = 0;
+  638          //    uint8 h = 0;
+  639          //    for (i = 0; i < Image_Y; i++)
+  640          //    {
+  641          //        l_border[i] = X_Border_Min;
+  642          //        r_border[i] = X_Border_Max;     //�ұ��߳�ʼ���ŵ����ұߣ������
+             -�ŵ�����ߣ������պ�����������߾ͻ����м䣬������ŵõ��
+             -�������
+  643          //    }
+  644          //    h = start;
+  645          //    //�ұ�
+  646          //    for (j = 0; j < r_total ; j++)
+  647          //    {
+  648          //        if (r_line[j][1] == h)
+  649          //        {
+  650          //            r_border[h] = r_line[j][0];
+  651          //        }
+  652          //        else
+  653          //        {
+  654          //            continue;//ÿ��ֻȡһ���㣬û����һ�оͲ���¼
+  655          //        }
+  656          //        h--;
+  657          //        if (h == end)
+  658          //        {
+  659          //            break;//�����һ���˳�
+  660          //        }
+  661          //    }
+  662          //    h = start;
+  663          //    for (j = 0; j < l_total; j++)
+  664          //    {
+  665          //        if (l_line[j][1] == h)
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 14  
+
+  666          //        {
+  667          //            l_border[h] = l_line[j][0];
+  668          //        }
+  669          //        else
+  670          //        {
+  671          //            continue;//ÿ��ֻȡһ���㣬û����һ�оͲ���¼
+  672          //        }
+  673          //        h--;
+  674          //        if (h == end)
+  675          //        {
+  676          //            break;//�����һ���˳�
+  677          //        }
+  678          //    }
+  679          //}
+  680          
+  681          void Get_Border(uint16 l_total, uint16 r_total, uint8 start, uint8 end, uint8 *l_border, uint8 *r_border,
+             - uint8(*l_line)[2], uint8(*r_line)[2])
+  682          {
+  683   1          uint8 i;
+  684   1          uint16 j;
+  685   1          for (i = 0; i < Image_Y; i++)
+  686   1          {
+  687   2              l_border[i] = X_Border_Min;
+  688   2              r_border[i] = X_Border_Max;
+  689   2          }
+  690   1          
+  691   1          if(Element == R_Circle){
+  692   2            
+  693   2            for (i = 0; i < Image_Y; i++)
+  694   2          {
+  695   3              R_Unilateral_Patrol_Border[i] = 40 ;
+  696   3          }
+  697   2          // ========== ��ȡ�ұ߽磺ͬһ��ȡ�����ĵ� ==========
+  698   2          for (j = 0; j < r_total; j++)
+  699   2          {
+  700   3              uint8 x = r_line[j][0];
+  701   3              uint8 y = r_line[j][1];
+  702   3      
+  703   3              if (y >= end && y <= start)
+  704   3              {
+  705   4                  // ������СX = �����ұ߽�
+  706   4                  if ( x > R_Unilateral_Patrol_Border[y])
+  707   4                  {
+  708   5                      R_Unilateral_Patrol_Border[y] = x;
+  709   5                  }
+  710   4              }
+  711   3          }
+  712   2        }
+  713   1        
+  714   1        if(Element == L_Circle){
+  715   2            
+  716   2        for (i = 0; i < Image_Y; i++)
+  717   2          {
+  718   3              L_Unilateral_Patrol_Border[i] = 40 ;
+  719   3          }
+  720   2          // ========== ��ȡ�ұ߽磺ͬһ��ȡ�����ĵ� ==========
+  721   2          for (j = 0; j < r_total; j++)
+  722   2          {
+  723   3              uint8 x = l_line[j][0];
+  724   3              uint8 y = l_line[j][1];
+  725   3      
+  726   3              if (y >= end && y <= start)
+  727   3              {
+  728   4                  // ������СX = �����ұ߽�
+  729   4                  if ( x < L_Unilateral_Patrol_Border[y])
+  730   4                  {
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 15  
+
+  731   5                      L_Unilateral_Patrol_Border[y] = x;
+  732   5                  }
+  733   4              }
+  734   3          }
+  735   2        }
+  736   1          // ��ʼ��
+  737   1          
+  738   1      
+  739   1          // ========== ��ȡ��߽磺ͬһ��ȡ���Ҳ�ĵ� ==========
+  740   1          for (j = 0; j < l_total; j++)
+  741   1          {
+  742   2              uint8 x = l_line[j][0];
+  743   2              uint8 y = l_line[j][1];
+  744   2      
+  745   2              // ֻ������Ч��
+  746   2              if (y >= end && y <= start)
+  747   2              {
+  748   3                  // �������X = ��ҵ���߽�
+  749   3                  if (x > l_border[y])
+  750   3                  {
+  751   4                      l_border[y] = x;
+  752   4                  }
+  753   3              }
+  754   2          }
+  755   1      
+  756   1          // ========== ��ȡ�ұ߽磺ͬһ��ȡ�����ĵ� ==========
+  757   1          for (j = 0; j < r_total; j++)
+  758   1          {
+  759   2              uint8 x = r_line[j][0];
+  760   2              uint8 y = r_line[j][1];
+  761   2      
+  762   2              if (y >= end && y <= start)
+  763   2              {
+  764   3                  // ������СX = �����ұ߽�
+  765   3                  if (r_border[y] == X_Border_Max || x < r_border[y])
+  766   3                  {
+  767   4                      r_border[y] = x;
+  768   4                  }
+  769   3              }
+  770   2          }
+  771   1            
+  772   1      }
+  773          //***************************************************************************************
+  774          
+  775          //****************************************������ȡ*******************************************
+             -***
+  776          
+  777          // l_border uint8 * ��߽�����ָ�룬�洢��߽��������� / ��ֵ�
+             -��Ϣ
+  778          // r_border uint8 * �ұ߽�����ָ�룬�洢�ұ߽��������� / ��ֵ��
+             -��Ϣ
+  779          // c_line uint8 * �����������������ָ�룬����������
+             -����߽�����������
+  780          // point_num  uint8 �߽�����������Ч������������ڿ���
+             -�ѭ�������ķ�Χ
+  781          // patching_flag  uint8 ����ģʽ��־�����Ʋ�ͬ�����µĲ����߼�
+             -�������ߡ��Ҳ��ߡ�Բ�����ߵȣ�
+  782          // unilateral_patrol_flag uint8 ����Ѳ��ģʽ��־�����Ʋ�ͬ�����µĵ
+             -���Ѳ���߼������󵥱ߡ��ҵ���Ѳ�ߵȣ�
+  783          //uint8 Cross_Center[60] = {38,38,38,38,38, 39,39,39,39,39, 39,39,39,39,39,  40,40,40,40,40, 40,40,40,40,
+             -40, 40,40,40,40,40,   40,40,40,40,40,  40,40,40,40,40,  40,40,40,40,40,  40,40,40,40,40,  40,40,40,40,40,  40,40,40,40,4
+             -0};
+  784          uint8 C_Line[(uint16)Image_Y] = {0};
+  785          void Get_Middle_Line(uint8 *l_border, uint8 *r_border, uint8 *c_line, uint8 point_num /* , uint8 patching
+             -_flag */, uint8 unilateral_patrol_flag )
+  786          {
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 16  
+
+  787   1        uint8 i;
+  788   1      
+  789   1        switch(unilateral_patrol_flag)  //����Ѳ��
+  790   1          {
+  791   2              case 0:
+  792   2              {
+  793   3                  for(i = 2; i < point_num + 2; i++)
+  794   3                  {
+  795   4                      if(Element == L_Turn)
+  796   4                          c_line[i] = (l_border[i] + r_border[i] + 1) >> 1;  //�����������
+             -�ƣ�����߽�?
+  797   4                      else if(Element == R_Turn)
+  798   4                          c_line[i] = (l_border[i] + r_border[i] - 1) >> 1;  //�����������
+             -�ƣ�����߽�?
+  799   4      //                else if(l_border[i] <= 2 && r_border[i] >= 77)              
+  800   4      //                    c_line[i] = Cross_Center[i]; 
+  801   4                      else  
+  802   4                          c_line[i] = (l_border[i] + r_border[i]) >> 1;
+  803   4                  }
+  804   3                  break;
+  805   3              }
+  806   2              case L_Unilateral_Patrol:
+  807   2              {
+  808   3                  uint8 L_Staright[60] = { 0, 0, 4, 5, 5, 5, 6, 6, 6, 7,
+  809   3                                           7, 7, 8, 8, 9, 9,10,11,11,12,
+  810   3                                          12,13,13,13,13,14,14,15,15,16,
+  811   3                                          16,16,17,17,18,18,19,19,19,20,
+  812   3                                          20,21,21,21,21,22,22,23,23,24,
+  813   3                                          24,24,25,25,25,26,26,27,27,28};
+  814   3                  for(i = 2; i < point_num + 2; i++)
+  815   3                  {
+  816   4                      c_line[i] = l_border[i] + L_Staright[i] + 6;
+  817   4                  }
+  818   3                  break;
+  819   3              }
+  820   2              case R_Unilateral_Patrol:
+  821   2              {
+  822   3                  uint8 R_Staright[60] = { 0, 0, 4, 5, 5, 5, 6, 6, 6, 7,
+  823   3                                           7, 7, 8, 8, 9, 9,10,11,11,12,
+  824   3                                          12,13,13,13,13,14,14,15,15,16,
+  825   3                                          16,16,17,17,18,18,19,19,19,20,
+  826   3                                          20,21,21,21,21,22,22,23,23,24,
+  827   3                                          24,24,25,25,25,26,26,27,27,28};
+  828   3                  for(i = 2; i < point_num + 2; i++)
+  829   3                  {
+  830   4                      c_line[i] = r_border[i] - R_Staright[i] - 4;
+  831   4                  }
+  832   3                  break;
+  833   3              }
+  834   2              case L_Arc_Unilateral_Patrol_2:
+  835   2              {
+  836   3                  uint8 L_Arc_1[60] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  837   3                                        0, 0, 0, 1, 1, 2, 2, 2, 3, 5,
+  838   3                                        6, 8, 9,11,12,13,14,15,16,16,
+  839   3                                       17,18,18,19,19,20,21,22,22,22,
+  840   3                                       23,23,23,24,25,25,26,26,26,26,
+  841   3                                       27,27,28,29,29,29,30,0, 0, 0};
+  842   3                  for(i = 2; i < point_num + 2; i++)
+  843   3                  {
+  844   4                      c_line[i] = L_Unilateral_Patrol_Border[i] + L_Arc_1[i] + 1;
+  845   4                  }
+  846   3                  break;
+  847   3              }
+  848   2              case R_Arc_Unilateral_Patrol_2:
+  849   2              {
+  850   3                  uint8 R_Arc_1[60] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 17  
+
+  851   3                                        0, 0, 0, 1, 1, 2, 2, 2, 3, 5,
+  852   3                                        6, 8, 9,11,12,13,14,15,16,16,
+  853   3                                       17,18,18,19,19,20,21,22,22,22,
+  854   3                                       23,23,23,24,25,25,26,26,26,26,
+  855   3                                       27,27,28,29,29,29,30,30, 0, 0};
+  856   3                  for(i = 2; i < point_num + 2; i++)
+  857   3                  {
+  858   4                    
+  859   4                      c_line[i] = R_Unilateral_Patrol_Border[i] - R_Arc_1[i] - 1 ;
+  860   4                  }
+  861   3                  break;
+  862   3              }
+  863   2              case L_Arc_Unilateral_Patrol_4:
+  864   2              {
+  865   3                  uint8 L_Arc_2[60] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  866   3                                        0, 0, 0, 1, 2, 3, 3, 5, 6, 8,
+  867   3                                        9,11,12,14,15,16,17,18,19,19,
+  868   3                                       20,21,21,21,22,23,23,24,24,24,
+  869   3                                       25,25,25,25,26,26,27,27,27,27,
+  870   3                                       28,28,29,30,30,30,31,31, 0, 0};
+  871   3                  for(i = 2; i < point_num + 2; i++)
+  872   3                  {
+  873   4                      c_line[i] = L_Unilateral_Patrol_Border[i] + L_Arc_2[i] - 3;
+  874   4                  }
+  875   3                  break;
+  876   3              }
+  877   2              case R_Arc_Unilateral_Patrol_4:
+  878   2              {
+  879   3                  uint8 R_Arc_2[60] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  880   3                                        0, 0, 0, 1, 2, 3, 3, 5, 6, 8,
+  881   3                                        9,11,12,14,15,16,17,18,19,19,
+  882   3                                       20,21,21,21,22,23,23,24,24,24,
+  883   3                                       25,25,25,25,26,26,27,27,27,27,
+  884   3                                       28,28,29,30,30,30,31,31, 0, 0};
+  885   3                  for(i = 2; i < point_num + 2; i++)
+  886   3                  {
+  887   4                      c_line[i] = R_Unilateral_Patrol_Border[i] - R_Arc_2[i] + 3;
+  888   4                  }
+  889   3                  break;
+  890   3              }
+  891   2          }
+  892   1      }
+  893          
+  894          
+  895          //*****************************TFT180��Ļ����***********************************
+  896          // �ڱ�����ȡ��ɺ���ô˺������п��ӻ�
+  897          // ����˵����
+  898          // l_line, r_line: Dir_Labyrinth_5����ı�������
+  899          // l_stastic, r_stastic: ���ұ��ߵ��������Dir_Labyrinth_5���ص�*l_stast
+             -ic/*r_stastic��
+  900          void Draw_Border_Points(uint8(*l_line)[2], uint8(*r_line)[2], 
+  901                                  uint16 l_stastic, uint16 r_stastic)
+  902          {
+  903   1          uint16 i;
+  904   1          
+  905   1          // 1. ���������ߣ���ɫ��
+  906   1          for (i = 0; i < l_stastic; i++) 
+  907   1          {
+  908   2              uint16 x = l_line[i][0];
+  909   2              uint16 y = l_line[i][1];
+  910   2              
+  911   2              // ���������ȷ������Ļ��Χ�ڣ�
+  912   2              if (x < tft180_x_max && y < tft180_y_max) 
+  913   2              {
+  914   3                  tft180_draw_point(x*2, y*2,   RGB565_RED);          // ����ú�ɫ���
+  915   3            tft180_draw_point(x*2, y*2-1 ,RGB565_RED);
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 18  
+
+  916   3              }
+  917   2          }
+  918   1          
+  919   1          // 2. �����Ҳ���ߣ���ɫ��
+  920   1          for (i = 0; i < r_stastic; i++) 
+  921   1          {
+  922   2              uint16 x = r_line[i][0];
+  923   2              uint16 y = r_line[i][1];
+  924   2              
+  925   2              if (x < tft180_x_max && y < tft180_y_max) 
+  926   2              {
+  927   3                  tft180_draw_point(x*2, y*2, RGB565_BLUE);         
+  928   3            tft180_draw_point(x*2,y*2-1,RGB565_BLUE);       // �Ҳ�����ɫ���
+  929   3              }
+  930   2          }
+  931   1        
+  932   1        // 3. �����м���ߣ���ɫ��
+  933   1          for (i = 1; i < Image_Y - 3; i++) 
+  934   1          {
+  935   2              uint16 x = C_Line[i] ;
+  936   2              uint16 y = i;
+  937   2              
+  938   2              if (x < tft180_x_max && y < tft180_y_max) 
+  939   2              {
+  940   3                  tft180_draw_point( x*2, y*2   , RGB565_YELLOW);         
+  941   3            tft180_draw_point( x*2, y*2-1 , RGB565_YELLOW);       // �м��û�ɫ���
+  942   3              }
+  943   2          }
+  944   1          
+  945   1          // 4. ��ѡ����������㣨��ɫʮ�֣�- ���ڵ���
+  946   1          if (l_stastic > 0 && r_stastic > 0)
+  947   1          {
+  948   2              uint16 meet_x = (r_line[r_stastic-1][0] + l_line[l_stastic-1][0]) >> 1;
+  949   2              uint16 meet_y = (r_line[r_stastic-1][1] + l_line[l_stastic-1][1]) >> 1;
+  950   2              
+  951   2              // ��ʮ�ֱ��
+  952   2              if (meet_x > 0 && meet_x < tft180_x_max - 1 && meet_y > 0 && meet_y < tft180_y_max - 1)
+  953   2              {
+  954   3                  tft180_draw_point(meet_x*2 - 1, meet_y*2, RGB565_GREEN);
+  955   3                  tft180_draw_point(meet_x*2 + 1, meet_y*2, RGB565_GREEN);
+  956   3                  tft180_draw_point(meet_x*2, meet_y*2 - 1, RGB565_GREEN);
+  957   3                  tft180_draw_point(meet_x*2, meet_y*2 + 1, RGB565_GREEN);
+  958   3                  tft180_draw_point(meet_x*2, meet_y*2, RGB565_GREEN);
+  959   3              }
+  960   2          }
+  961   1      }
+  962          
+  963          void Draw_Border_Points_1(uint8(*l_line)[2], uint8(*r_line)[2], uint8 *c_line ,
+  964                                  uint16 l_stastic, uint16 r_stastic)
+  965          {
+  966   1          uint16 i;
+  967   1          
+  968   1          // 1. ���������ߣ���ɫ��
+  969   1          for (i = 0; i < l_stastic; i++) 
+  970   1          {
+  971   2              uint16 x = l_line[i][0];
+  972   2              uint16 y = l_line[i][1];
+  973   2              
+  974   2              // ���������ȷ������Ļ��Χ�ڣ�
+  975   2              if (x < tft180_x_max && y < tft180_y_max) 
+  976   2              {
+  977   3                  tft180_draw_point(x, y,   RGB565_RED);          // ����ú�ɫ���
+  978   3              }
+  979   2          }
+  980   1          
+  981   1          // 2. �����Ҳ���ߣ���ɫ��
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 19  
+
+  982   1          for (i = 0; i < r_stastic; i++) 
+  983   1          {
+  984   2              uint16 x = r_line[i][0];
+  985   2              uint16 y = r_line[i][1];
+  986   2              
+  987   2              if (x < tft180_x_max && y < tft180_y_max) 
+  988   2              {
+  989   3                  tft180_draw_point(x, y, RGB565_BLUE);         
+  990   3            // �Ҳ�����ɫ���
+  991   3              }
+  992   2          }
+  993   1        
+  994   1        // 3. �����м���ߣ���ɫ��
+  995   1          for (i = 1; i < Image_Y - 3; i++) 
+  996   1          {
+  997   2              uint16 x = c_line[i] ;
+  998   2              uint16 y = i;
+  999   2              
+ 1000   2              if (x < tft180_x_max && y < tft180_y_max) 
+ 1001   2              {
+ 1002   3                  tft180_draw_point( x , y , RGB565_YELLOW);          
+ 1003   3            // �м��û�ɫ���
+ 1004   3              }
+ 1005   2          }
+ 1006   1          
+ 1007   1          // 4. ��ѡ����������㣨��ɫʮ�֣�- ���ڵ���
+ 1008   1          if (l_stastic > 0 && r_stastic > 0)
+ 1009   1          {
+ 1010   2              uint16 meet_x = (r_line[r_stastic-1][0] + l_line[l_stastic-1][0]) >> 1;
+ 1011   2              uint16 meet_y = (r_line[r_stastic-1][1] + l_line[l_stastic-1][1]) >> 1;
+ 1012   2      
+ 1013   2              // ��ʮ�ֱ��
+ 1014   2              if (meet_x > 0 && meet_x < tft180_x_max - 1 && meet_y > 0 && meet_y < tft180_y_max - 1)
+ 1015   2              {
+ 1016   3                  tft180_draw_point(meet_x - 1, meet_y, RGB565_GREEN);
+ 1017   3                  tft180_draw_point(meet_x + 1, meet_y, RGB565_GREEN);
+ 1018   3                  tft180_draw_point(meet_x, meet_y - 1, RGB565_GREEN);
+ 1019   3                  tft180_draw_point(meet_x, meet_y + 1, RGB565_GREEN);
+ 1020   3                  tft180_draw_point(meet_x, meet_y, RGB565_GREEN);
+ 1021   3              }
+ 1022   2          }
+ 1023   1      
+ 1024   1          // 5. ������ת��յ㣨��ɫʮ�֣�- L_Up_Turn_Left_Point_1
+ 1025   1      //    if(L_Up_Turn_Left_Point_Flag_1)
+ 1026   1      //    {
+ 1027   1      //        uint16 x = L_Up_Turn_Left_Point_1[0];
+ 1028   1      //        uint16 y = L_Up_Turn_Left_Point_1[1];
+ 1029   1      //        // ���������ȷ��ʮ�ֵ�5���㶼����Ļ��Χ�� (x*2,
+             - y*2, x*2-1, x*2+1, y*2-1, y*2+1)
+ 1030   1      //        if(x >= 1 && x <= X_Border_Max - 1 && y >= 1 && y <= Y_Border_Max - 1)
+ 1031   1      //        {
+ 1032   1      //            tft180_draw_point(x, y, RGB565_BROWN);
+ 1033   1      //            tft180_draw_point(x - 1, y, RGB565_BROWN);
+ 1034   1      //            tft180_draw_point(x + 1, y, RGB565_BROWN);
+ 1035   1      //            tft180_draw_point(x, y - 1, RGB565_BROWN);
+ 1036   1      //            tft180_draw_point(x, y + 1, RGB565_BROWN);
+ 1037   1      //        }
+ 1038   1      //    }
+ 1039   1      
+ 1040   1      //    // 6. ������ת�ҹյ㣨��ɫʮ�֣�- R_Up_Turn_Right_Point_1
+ 1041   1      //    if(R_Up_Turn_Right_Point_Flag_1)
+ 1042   1      //    {
+ 1043   1      //        uint16 x = R_Up_Turn_Right_Point_1[0];
+ 1044   1      //        uint16 y = R_Up_Turn_Right_Point_1[1];
+ 1045   1      //        if(x >= 1 && x <= X_Border_Max - 1 && y >= 1 && y <= Y_Border_Max - 1)
+ 1046   1      //        {
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 20  
+
+ 1047   1      //            tft180_draw_point(x, y, RGB565_BROWN);
+ 1048   1      //            tft180_draw_point(x - 1, y, RGB565_BROWN);
+ 1049   1      //            tft180_draw_point(x + 1, y, RGB565_BROWN);
+ 1050   1      //            tft180_draw_point(x, y - 1, RGB565_BROWN);
+ 1051   1      //            tft180_draw_point(x, y + 1, RGB565_BROWN);
+ 1052   1      //        }
+ 1053   1      //    }
+ 1054   1      
+ 1055   1          // 7. ������ת�Ϲյ㣨��ɫʮ�֣�- L_Right_Turn_Up_Point_1
+ 1056   1      //    if(L_Right_Turn_Up_Point_Flag_1)
+ 1057   1      //    {
+ 1058   1      //        uint16 x = L_Right_Turn_Up_Point_1[0];
+ 1059   1      //        uint16 y = L_Right_Turn_Up_Point_1[1];
+ 1060   1      //        if(x >= 1 && x <= X_Border_Max - 1 && y >= 1 && y <= Y_Border_Max - 1)
+ 1061   1      //        {
+ 1062   1      //            tft180_draw_point(x, y, RGB565_BROWN);
+ 1063   1      //            tft180_draw_point(x - 1, y, RGB565_BROWN);
+ 1064   1      //            tft180_draw_point(x + 1, y, RGB565_BROWN);
+ 1065   1      //            tft180_draw_point(x, y - 1, RGB565_BROWN);
+ 1066   1      //            tft180_draw_point(x, y + 1, RGB565_BROWN);
+ 1067   1      //        }
+ 1068   1      //    }
+ 1069   1      
+ 1070   1          // 8. ������ת�Ϲյ㣨��ɫʮ�֣�- R_Left_Turn_Up_Point_1
+ 1071   1      //    if(R_Left_Turn_Up_Point_Flag_1)
+ 1072   1      //    {
+ 1073   1      //        uint16 x = R_Left_Turn_Up_Point_1[0];
+ 1074   1      //        uint16 y = R_Left_Turn_Up_Point_1[1];
+ 1075   1      //        if(x >= 1 && x <= X_Border_Max - 1 && y >= 1 && y <= Y_Border_Max - 1)
+ 1076   1      //        {
+ 1077   1      //            tft180_draw_point(x, y, RGB565_BROWN);
+ 1078   1      //            tft180_draw_point(x - 1, y, RGB565_BROWN);
+ 1079   1      //            tft180_draw_point(x + 1, y, RGB565_BROWN);
+ 1080   1      //            tft180_draw_point(x, y - 1, RGB565_BROWN);
+ 1081   1      //            tft180_draw_point(x, y + 1, RGB565_BROWN);
+ 1082   1      //        }
+ 1083   1      //    }
+ 1084   1      
+ 1085   1          // 9. ������Բ���յ㣨��ɫʮ�֣�- L_Arc_Turn_Point
+ 1086   1      //    if(L_Arc_Turn_Point_Flag)
+ 1087   1      //    {
+ 1088   1      //        uint8 j;
+ 1089   1      //        for(j = 0; j < L_Arc_Turn_Point_Num && j < 3; j++)
+ 1090   1      //        {
+ 1091   1      //            uint16 x = L_Arc_Turn_Point[j][0];
+ 1092   1      //            uint16 y = L_Arc_Turn_Point[j][1];
+ 1093   1      //            if(x >= 1 && x <= X_Border_Max - 1 && y >= 1 && y <= Y_Border_Max - 1)
+ 1094   1      //            {
+ 1095   1      //                tft180_draw_point(x, y, RGB565_BROWN);
+ 1096   1      //            tft180_draw_point(x - 1, y, RGB565_BROWN);
+ 1097   1      //            tft180_draw_point(x + 1, y, RGB565_BROWN);
+ 1098   1      //            tft180_draw_point(x, y - 1, RGB565_BROWN);
+ 1099   1      //            tft180_draw_point(x, y + 1, RGB565_BROWN);
+ 1100   1      //            }
+ 1101   1      //        }
+ 1102   1      //    }
+ 1103   1      
+ 1104   1          // 10. ������Բ���յ㣨��ɫʮ�֣�- R_Arc_Turn_Point
+ 1105   1      //    if(R_Arc_Turn_Point_Flag)
+ 1106   1      //    {
+ 1107   1      //        uint8 j;
+ 1108   1      //        for(j = 0; j < R_Arc_Turn_Point_Num && j < 3; j++)
+ 1109   1      //        {
+ 1110   1      //            uint16 x = R_Arc_Turn_Point[j][0];
+ 1111   1      //            uint16 y = R_Arc_Turn_Point[j][1];
+ 1112   1      //            if(x >= 1 && x <= X_Border_Max - 1 && y >= 1 && y <= Y_Border_Max - 1)
+C251 COMPILER V5.60.0,  find_line                                                          12/09/26  19:11:26  PAGE 21  
+
+ 1113   1      //            {
+ 1114   1      //               tft180_draw_point(x, y, RGB565_BROWN);
+ 1115   1      //            tft180_draw_point(x - 1, y, RGB565_BROWN);
+ 1116   1      //            tft180_draw_point(x + 1, y, RGB565_BROWN);
+ 1117   1      //            tft180_draw_point(x, y - 1, RGB565_BROWN);
+ 1118   1      //            tft180_draw_point(x, y + 1, RGB565_BROWN);
+ 1119   1      //            }
+ 1120   1      //        }
+ 1121   1      //    }
+ 1122   1      }
+ 1123          
+ 1124          // ʹ��ʾ������Dir_Labyrinth_5���ú�ִ�У���
+ 1125          // Dir_Labyrinth_5(... , &l_stastic, &r_stastic, ...);  // ִ�б�����ȡ
+ 1126          // Draw_Border_Points(Adaptive_L_Line, Adaptive_R_Line, l_stastic, r_stastic);  // ������ʾ
+ 1127          
+ 1128          
+ 1129          
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =    ------     ------
+  ecode size           =     18111     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =      1281     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       543     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
